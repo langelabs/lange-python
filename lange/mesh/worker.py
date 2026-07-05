@@ -131,7 +131,7 @@ class MeshWorker:
                 status="hello",
                 data=MeshWorkerRegistration(
                     name=self.name,
-                    request_timeout_seconds=self.timeout,
+                    timeout=self.timeout,
                 ),
                 type="manage",
             )

@@ -6,15 +6,15 @@ from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
 
 
 def test_mesh_rest_request_serializes_http_payload() -> None:
-    """Assert REST request payloads preserve headers, body, and encoding aliases."""
+    """Assert REST request payloads preserve headers, body, and encoding."""
     request = MeshRelayRequest.model_validate(
         {
             "method": "POST",
             "path": "/api/widgets",
-            "queryParams": {"page": ["1"], "tag": ["a", "b"]},
+            "query_params": {"page": ["1"], "tag": ["a", "b"]},
             "headers": {"content-type": "application/json"},
             "body": "eyJvayI6dHJ1ZX0=",
-            "bodyEncoding": "base64",
+            "body_encoding": "base64",
         }
     )
 
@@ -24,8 +24,8 @@ def test_mesh_rest_request_serializes_http_payload() -> None:
     assert request.headers == {"content-type": "application/json"}
     assert request.body == "eyJvayI6dHJ1ZX0="
     assert request.body_encoding == "base64"
-    assert request.model_dump(by_alias=True)["bodyEncoding"] == "base64"
-    assert request.model_dump(by_alias=True)["queryParams"] == {
+    assert request.model_dump()["body_encoding"] == "base64"
+    assert request.model_dump()["query_params"] == {
         "page": ["1"],
         "tag": ["a", "b"],
     }
@@ -46,7 +46,7 @@ def test_mesh_rest_response_serializes_http_payload() -> None:
     assert response.body == "upstream failed"
     assert response.body_encoding is None
     assert response.error == "bad gateway"
-    assert "bodyEncoding" in response.model_dump(by_alias=True)
+    assert "body_encoding" in response.model_dump()
 
 
 def test_mesh_message_accepts_rest_request_payload() -> None:
@@ -92,6 +92,7 @@ def test_mesh_message_accepts_relay_worker_config_payload() -> None:
     message = MeshMessage.model_validate(
         {
             "status": "hello",
+            "type": "manage",
             "data": {
                 "remote_relay_address": "https://default.mesh.lange-labs.com/",
                 "type": "REST",
@@ -111,21 +112,22 @@ def test_mesh_message_accepts_relay_worker_config_payload() -> None:
 
 
 def test_mesh_message_accepts_relay_worker_registration_payload() -> None:
-    """Assert worker registration payloads use ``name`` and timeout alias."""
+    """Assert worker registration payloads use ``name`` and timeout."""
     message = MeshMessage.model_validate(
         {
             "status": "hello",
+            "type": "manage",
             "data": {
                 "name": "default",
-                "requestTimeoutSeconds": 30.0,
+                "timeout": 30.0,
             },
         }
     )
 
     assert isinstance(message.data, MeshWorkerRegistration)
     assert message.data.name == "default"
-    assert message.data.request_timeout_seconds == 30.0
-    assert message.data.model_dump(by_alias=True) == {
+    assert message.data.timeout == 30.0
+    assert message.data.model_dump() == {
         "name": "default",
-        "requestTimeoutSeconds": 30.0,
+        "timeout": 30.0,
     }

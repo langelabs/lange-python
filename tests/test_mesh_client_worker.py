@@ -59,8 +59,8 @@ def test_mesh_client_send_serializes_messages_on_client_loop() -> None:
     assert sent_message.data is None
 
 
-def test_mesh_client_send_serializes_contract_aliases() -> None:
-    """Send registration payloads with their websocket field aliases."""
+def test_mesh_client_send_serializes_worker_registration() -> None:
+    """Send registration payloads with their websocket field names."""
 
     class FakeWebSocket:
         """Capture websocket payloads sent by the mesh client."""
@@ -92,9 +92,10 @@ def test_mesh_client_send_serializes_contract_aliases() -> None:
         await client.send(
             MeshMessage(
                 status="hello",
+                type="manage",
                 data=MeshWorkerRegistration(
                     name="local-relay",
-                    request_timeout_seconds=12.5,
+                    timeout=12.5,
                 ),
             )
         )
@@ -103,11 +104,11 @@ def test_mesh_client_send_serializes_contract_aliases() -> None:
     fake_websocket = asyncio.run(run())
 
     raw_message = json.loads(fake_websocket.sent[0])
+    assert raw_message["type"] == "manage"
     assert raw_message["data"] == {
         "name": "local-relay",
-        "requestTimeoutSeconds": 12.5,
+        "timeout": 12.5,
     }
-    assert "request_timeout_seconds" not in raw_message["data"]
 
 
 def test_mesh_client_accept_requests_decodes_messages_for_handler() -> None:
@@ -384,10 +385,11 @@ def test_mesh_worker_sends_name_registration_and_api_key(
     assert client.kwargs["api_key"] == "secret-token"
     assert isinstance(client.sent[0].data, MeshWorkerRegistration)
     assert client.sent[0].data.name == "local-relay"
-    assert client.sent[0].data.request_timeout_seconds == 12.5
-    assert client.sent[0].data.model_dump(by_alias=True) == {
+    assert client.sent[0].type == "manage"
+    assert client.sent[0].data.timeout == 12.5
+    assert client.sent[0].data.model_dump() == {
         "name": "local-relay",
-        "requestTimeoutSeconds": 12.5,
+        "timeout": 12.5,
     }
 
 

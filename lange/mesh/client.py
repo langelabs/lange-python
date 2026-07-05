@@ -74,7 +74,7 @@ class MeshClient(threading.Thread):
         if self.websocket is None:
             raise RuntimeError("WebSocket is not connected")
 
-        await self.websocket.send(message.model_dump_json(by_alias=True))
+        await self.websocket.send(message.model_dump_json())
 
     def run(self) -> None:
         """Run the websocket client until the connection closes."""
