@@ -2,9 +2,10 @@ import asyncio
 import threading
 import platform
 
-from lange.contracts import MeshRelayRequest, MeshWorkerRegistration
+from lange.contracts import MeshRelayRequest
+from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
 from lange.mesh.client import MeshClient
-from lange.contracts import MeshMessage, MeshWorkerConfig, AiModelConfig
+from lange.contracts import MeshMessage, AiModelConfig
 import base64
 import httpx
 from httpx import Timeout
@@ -14,7 +15,6 @@ from lange.contracts import (
 from .utils.body import decode_request_body
 from .utils.url import build_url
 from .utils.headers import filter_hop_by_hop_headers
-from .ai_clients import start_ai_models
 
 
 class MeshWorker:
@@ -23,7 +23,8 @@ class MeshWorker:
         name: str,
         relay_target: str | None = None,
         timeout: float = 60,
-        remote_base_url: str = "wss://api.lange-labs.com",
+        remote_base_url: str = "wss://mesh.lange-labs.com",
+        api_key: str | None = None,
         is_ai_worker: bool = False,
     ) -> None:
         """Create a restartable mesh worker.
@@ -31,12 +32,14 @@ class MeshWorker:
         :param name: Worker name registered with the mesh API.
         :param relay_target: Optional local HTTP target for relay requests.
         :param timeout: Connection and relay request timeout in seconds.
-        :param remote_base_url: Base websocket URL for the Lange API.
+        :param remote_base_url: Base websocket URL for the Lange mesh service.
+        :param api_key: Optional bearer token used for mesh worker authentication.
         :param is_ai_worker: Whether this worker should start AI model clients.
         """
         self.client: MeshClient | None = None
         self._thread: threading.Thread | None = None
         self._remote_base_url = remote_base_url
+        self._api_key = api_key
 
         # worker config
         self.name = name
@@ -60,6 +63,7 @@ class MeshWorker:
         return MeshClient(
             handler=self.handle,
             remote_base_url=self._remote_base_url,
+            api_key=self._api_key,
             timeout=self.timeout,
         )
 
@@ -124,13 +128,9 @@ class MeshWorker:
         await client.send(
             MeshMessage(
                 status="hello",
-                type="manage",
                 data=MeshWorkerRegistration(
                     name=self.name,
-                    timeout=self.timeout,
-                    platform=self.platform,
-                    is_ai_worker=self.is_ai_worker,
-                    is_relay_worker=self.relay_target is not None,
+                    request_timeout_seconds=self.timeout,
                 ),
             )
         )
@@ -164,25 +164,19 @@ class MeshWorker:
         :returns: Ready message for the mesh API.
         """
         # guards
-        if not message.status == "hello" or not isinstance(
+        if message.status != "hello" or not isinstance(
                 message.data, MeshWorkerConfig
         ):
             raise ValueError()
 
-        self.remote_relay_address = message.data.relay_address
-        self.ai_models = message.data.ai_models
-
-        # start the ai worker in case they are supplied
-        if self.is_ai_worker and len(self.ai_models) > 0:
-            self.ai_worker = start_ai_models(self.ai_models, self.platform)
+        self.remote_relay_address = message.data.remote_relay_address
 
         return MeshMessage(
             status="ready",
-            type="manage",
             data=None
         )
 
-    async def _handle_ping(self, message: MeshMessage) -> MeshMessage | None:
+    async def _handle_ping(self, message: MeshMessage) -> MeshMessage:
         """Respond to mesh health checks.
 
         :param message: Mesh ping message.
@@ -192,7 +186,10 @@ class MeshWorker:
         if not message.status == "ping":
             raise ValueError()
 
-        return MeshMessage(status="ready", data=None, type="manage")
+        if self.client and self.client.ready:
+            return MeshMessage(status="ready", data=None, type="manage")
+        else:
+            return return MeshMessage(status="pending", data=None, type="manage")
 
     async def _handle_relay_request(self, message: MeshMessage) -> MeshMessage | None:
         """Forward one relay request to the local target.

@@ -23,7 +23,7 @@ class MeshClient(threading.Thread):
         """Create a mesh websocket client thread.
 
         :param handler: Async callback for decoded mesh messages.
-        :param remote_base_url: Base websocket URL for the Lange API.
+        :param remote_base_url: Base websocket URL for the Lange mesh service.
         :param api_key: Optional bearer token used for authentication.
         :param timeout: Connection and readiness timeout in seconds.
         """
@@ -74,7 +74,7 @@ class MeshClient(threading.Thread):
         if self.websocket is None:
             raise RuntimeError("WebSocket is not connected")
 
-        await self.websocket.send(message.model_dump_json())
+        await self.websocket.send(message.model_dump_json(by_alias=True))
 
     def run(self) -> None:
         """Run the websocket client until the connection closes."""
@@ -119,7 +119,7 @@ class MeshClient(threading.Thread):
 
         try:
             async with websockets.connect(
-                uri=f"{self.remote_base_url}/api/v1/mesh/relay/entrypoint",
+                uri=f"{self.remote_base_url}/v1/workers/entrypoint",
                 additional_headers=headers,
                 ssl=ssl_context,
                 proxy=None,

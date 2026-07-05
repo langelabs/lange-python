@@ -27,7 +27,7 @@ def _bootstrap_import_path() -> None:
 _bootstrap_import_path()
 
 
-API_WEBSOCKET_HOST = "ws://localhost:8000"
+MESH_WEBSOCKET_HOST = "ws://localhost:8000"
 RELAY_NAME = "dev_manual_test"
 FORWARD_TARGET = "http://localhost:5173"
 
@@ -42,11 +42,11 @@ def main() -> None:
     relay = MeshWorker(
         name=RELAY_NAME,
         relay_target=FORWARD_TARGET,
-        remote_base_url=API_WEBSOCKET_HOST,
+        remote_base_url=MESH_WEBSOCKET_HOST,
     )
 
     print("Starting manual mesh relay client")
-    print(f"API websocket host: {API_WEBSOCKET_HOST}")
+    print(f"Mesh websocket host: {MESH_WEBSOCKET_HOST}")
     print(f"Relay worker name: {RELAY_NAME}")
     print(f"Forward target: {FORWARD_TARGET}")
 

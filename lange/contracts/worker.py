@@ -1,19 +1,27 @@
 from typing import Literal
-from pydantic import BaseModel
-from .ai_model import AiModelConfig
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class MeshWorkerRegistration(BaseModel):
-    """
-    Registration payload sent by a mesh worker during hello.
-    """
+    """Registration payload sent by a mesh relay worker during hello."""
+
+    model_config = ConfigDict(populate_by_name=True)
 
     name: str
-    timeout: float
-    platform: Literal["Darwin", "Linux", "Windows"]
+    request_timeout_seconds: float = Field(
+        validation_alias="requestTimeoutSeconds",
+        serialization_alias="requestTimeoutSeconds",
+    )
 
-    is_ai_worker: bool
-    is_relay_worker: bool
 
 class MeshWorkerConfig(BaseModel):
-    relay_address: str | None
-    ai_models: list[AiModelConfig]
+    """Runtime configuration returned to a registered mesh relay worker."""
+
+    remote_relay_address: str
+    type: Literal["REST"]
+
+__all__ = [
+    "MeshWorkerConfig",
+    "MeshWorkerRegistration",
+]

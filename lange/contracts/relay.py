@@ -26,7 +26,7 @@ class MeshRelayRequest(BaseModel):
 
 
 class MeshRelayResponse(BaseModel):
-    """REST response payload returned by a mesh compute worker."""
+    """REST response payload returned by a mesh relay worker."""
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -39,3 +39,8 @@ class MeshRelayResponse(BaseModel):
         serialization_alias="bodyEncoding",
     )
     error: str | None = None
+
+__all__ = [
+    "MeshRelayRequest",
+    "MeshRelayResponse",
+]

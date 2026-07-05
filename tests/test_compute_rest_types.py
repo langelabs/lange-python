@@ -1,11 +1,8 @@
 """Tests for compute REST mesh payload types."""
 
 from lange.contracts.mesh import MeshMessage
-from lange.contracts.relay import (
-    MeshRelayRequest,
-    MeshRelayResponse,
-)
-from lange.contracts.worker import MeshWorkerConfig
+from lange.contracts.relay import MeshRelayRequest, MeshRelayResponse
+from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
 
 
 def test_mesh_rest_request_serializes_http_payload() -> None:
@@ -95,20 +92,40 @@ def test_mesh_message_accepts_relay_worker_config_payload() -> None:
     message = MeshMessage.model_validate(
         {
             "status": "hello",
-            "type": "manage",
             "data": {
-                "relay_address": "http://localhost:8000/api/v1/mesh/relay/rest/default",
-                "ai_models": [],
+                "remote_relay_address": "https://default.mesh.lange-labs.com/",
+                "type": "REST",
             },
         }
     )
 
     assert isinstance(message.data, MeshWorkerConfig)
     assert (
-        message.data.relay_address
-        == "http://localhost:8000/api/v1/mesh/relay/rest/default"
+        message.data.remote_relay_address
+        == "https://default.mesh.lange-labs.com/"
     )
     assert message.model_dump(mode="json")["data"] == {
-        "relay_address": "http://localhost:8000/api/v1/mesh/relay/rest/default",
-        "ai_models": [],
+        "remote_relay_address": "https://default.mesh.lange-labs.com/",
+        "type": "REST",
+    }
+
+
+def test_mesh_message_accepts_relay_worker_registration_payload() -> None:
+    """Assert worker registration payloads use ``name`` and timeout alias."""
+    message = MeshMessage.model_validate(
+        {
+            "status": "hello",
+            "data": {
+                "name": "default",
+                "requestTimeoutSeconds": 30.0,
+            },
+        }
+    )
+
+    assert isinstance(message.data, MeshWorkerRegistration)
+    assert message.data.name == "default"
+    assert message.data.request_timeout_seconds == 30.0
+    assert message.data.model_dump(by_alias=True) == {
+        "name": "default",
+        "requestTimeoutSeconds": 30.0,
     }

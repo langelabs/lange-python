@@ -3,7 +3,7 @@ import time
 from lange.mesh.worker import MeshWorker
 
 
-API_WEBSOCKET_HOST = "wss://api.lange-labs.com"
+MESH_WEBSOCKET_HOST = "wss://mesh.lange-labs.com"
 RELAY_NAME = "testing"
 FORWARD_TARGET = "http://localhost:5173"
 
@@ -16,11 +16,11 @@ def main() -> None:
     relay = MeshWorker(
         name=RELAY_NAME,
         relay_target=FORWARD_TARGET,
-        remote_base_url=API_WEBSOCKET_HOST,
+        remote_base_url=MESH_WEBSOCKET_HOST,
     )
 
     print("Starting remote manual mesh relay client")
-    print(f"API websocket host: {API_WEBSOCKET_HOST}")
+    print(f"Mesh websocket host: {MESH_WEBSOCKET_HOST}")
     print(f"Relay worker name: {RELAY_NAME}")
     print(f"Forward target: {FORWARD_TARGET}")
 
