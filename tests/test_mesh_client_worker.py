@@ -562,9 +562,11 @@ def test_mesh_worker_forwards_relay_requests_to_local_target(
 
         :returns: Relay response message.
         """
-        return await worker._handle_relay_request(
-            MeshMessage(status="request", type="relay", data=request)
-        )
+        request_message = MeshMessage(status="request", type="relay", data=request)
+        response_message = await worker._handle_relay_request(request_message)
+        assert response_message is not None
+        assert response_message.id == request_message.id
+        return response_message
 
     response = asyncio.run(run())
 

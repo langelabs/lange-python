@@ -230,6 +230,7 @@ class MeshWorker:
                     content=body
                 )
                 return MeshMessage(
+                    id=message.id,
                     status="response",
                     type="relay",
                     data=MeshRelayResponse(
