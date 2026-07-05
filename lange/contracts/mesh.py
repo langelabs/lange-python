@@ -7,7 +7,7 @@ from .relay import MeshRelayRequest, MeshRelayResponse
 
 class MeshMessage(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    status: Literal["hello", "ping", "ready", "request", "response"]
+    status: Literal["hello","bye", "ping", "ready", "request", "response"]
     type: Literal["relay", "compute", "manage"]
 
     # data type

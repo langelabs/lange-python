@@ -19,17 +19,18 @@ from .ai_clients import start_ai_models
 
 class MeshWorker(threading.Thread):
     def __init__(
-        self,
-            name:str,
-        relay_target: str | None = None,
-        timeout: float = 60,
-        remote_base_url="wss://api.lange-labs.com",
-        is_ai_worker: bool = False,
+            self,
+            name: str,
+            relay_target: str | None = None,
+            timeout: float = 60,
+            remote_base_url="wss://api.lange-labs.com",
+            is_ai_worker: bool = False,
     ):
         super().__init__(daemon=True)
-        self.client = MeshClient(handler=self.handle,
-                                 remote_base_url=remote_base_url,
-                                 timeout=timeout)
+        self.client = MeshClient(
+            handler=self.handle,
+            remote_base_url=remote_base_url,
+            timeout=timeout)
 
         # worker config
         self.name = name
@@ -44,12 +45,9 @@ class MeshWorker(threading.Thread):
         self.ai_models: list[AiModelConfig] = []
         self.ai_worker: list = []
         self.is_ai_worker = is_ai_worker
-        
-        
 
     def run(self):
         asyncio.run(self._run_async())
-
 
     async def _run_async(self):
         self.client.start()
@@ -73,10 +71,11 @@ class MeshWorker(threading.Thread):
         # join the client process
         self.client.join()
 
-
     async def handle(self, message: MeshMessage) -> None:
         if message.status == "hello":
             response = await self._handle_hello(message)
+        elif message.status == "ping":
+            response = await self._handle_ping(message)
         elif message.status == "request" and message.type == "relay":
             response = await self._handle_relay_request(message)
         else:
@@ -88,7 +87,7 @@ class MeshWorker(threading.Thread):
     async def _handle_hello(self, message: MeshMessage) -> MeshMessage:
         # guards
         if not message.status == "hello" or not isinstance(
-            message.data, MeshWorkerConfig
+                message.data, MeshWorkerConfig
         ):
             raise ValueError()
 
@@ -105,12 +104,17 @@ class MeshWorker(threading.Thread):
             data=None
         )
 
+    async def _handle_ping(self, message: MeshMessage) -> MeshMessage | None:
+        # guards
+        if not message.status == "ping":
+            raise ValueError()
 
+        return MeshMessage(status="ready", data=None, type="manage")
 
     async def _handle_relay_request(self, message: MeshMessage) -> MeshMessage | None:
         # guards
         if not message.status == "request" or not isinstance(
-            message.data, MeshRelayRequest
+                message.data, MeshRelayRequest
         ):
             raise ValueError()
         if not self.relay_target:
@@ -119,7 +123,7 @@ class MeshWorker(threading.Thread):
         # build the request parts
         method = message.data.method.upper()
         headers = filter_hop_by_hop_headers(message.data.headers)
-        body = decode_request_body(encoding=message.data.body_encoding,body=message.data.body)
+        body = decode_request_body(encoding=message.data.body_encoding, body=message.data.body)
         target_url = build_url(
             base_url=self.relay_target,
             path=message.data.path,
@@ -128,7 +132,7 @@ class MeshWorker(threading.Thread):
         )
         # request from the target
         async with httpx.AsyncClient(
-            timeout=Timeout(timeout=self.timeout)
+                timeout=Timeout(timeout=self.timeout)
         ) as http_client:
             try:
                 response = await http_client.request(
@@ -149,4 +153,3 @@ class MeshWorker(threading.Thread):
                 )
             except Exception as e:
                 print(e)
-        
