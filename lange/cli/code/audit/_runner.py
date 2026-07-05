@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from ._types import AuditTool, PNPM_AUDIT_TOOL, UV_AUDIT_TOOL
+from ._types import AuditTool, PNPM_AUDIT_TOOL
 
 
 def build_audit_command(audit_tool: AuditTool) -> list[str]:
