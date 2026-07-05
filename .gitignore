@@ -13,3 +13,4 @@ htmlcov/
 .uv-cache/
 .ty/
 .idea
+tests/manual

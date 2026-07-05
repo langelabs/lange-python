@@ -73,8 +73,9 @@ class MeshWorker:
             raise RuntimeError("MeshWorker is already running")
 
         self.client = self._create_client()
-        self._thread = threading.Thread(target=self.run, daemon=True)
-        self._thread.start()
+        _thread = threading.Thread(target=self.run, daemon=True)
+        _thread.start()
+        self._thread = _thread
 
     def run(self) -> None:
         """Run the worker connection until it is stopped or disconnected."""
@@ -132,6 +133,7 @@ class MeshWorker:
                     name=self.name,
                     request_timeout_seconds=self.timeout,
                 ),
+                type="manage",
             )
         )
 
@@ -150,7 +152,7 @@ class MeshWorker:
         elif message.status == "request" and message.type == "relay":
             response = await self._handle_relay_request(message)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f"message status {message.status} is currently not handled in the client.")
 
         if response is not None:
             if self.client is None:
@@ -173,7 +175,8 @@ class MeshWorker:
 
         return MeshMessage(
             status="ready",
-            data=None
+            data=None,
+            type="manage"
         )
 
     async def _handle_ping(self, message: MeshMessage) -> MeshMessage:
