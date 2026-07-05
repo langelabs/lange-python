@@ -1,0 +1,85 @@
+{
+  "model": "gpt-5.5-thinking",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful AI assistant. Answer clearly, politely, and with practical detail."
+    },
+    {
+      "role": "user",
+      "content": "Hi, I am preparing a talk for a conference and need help structuring it."
+    },
+    {
+      "role": "assistant",
+      "content": "Of course. What is the topic of the talk, how long should it be, and who is the audience?"
+    },
+    {
+      "role": "user",
+      "content": "The topic is autonomous AI agents in software engineering. The talk is 30 minutes and the audience is mostly researchers and senior developers."
+    },
+    {
+      "role": "assistant",
+      "content": "A good structure would be: introduce the motivation, define autonomous AI agents, explain current use cases in software engineering, discuss evaluation challenges, present safety and reliability concerns, then close with open research questions."
+    },
+    {
+      "role": "user",
+      "content": "Can you make that more concrete with sections and approximate timing?"
+    },
+    {
+      "role": "assistant",
+      "content": "Yes. Use 3 minutes for motivation, 4 minutes for definitions, 6 minutes for current capabilities, 6 minutes for case studies, 5 minutes for evaluation and benchmarks, 4 minutes for safety and governance, and 2 minutes for the conclusion."
+    },
+    {
+      "role": "user",
+      "content": "I also want to include one realistic example from software testing."
+    },
+    {
+      "role": "assistant",
+      "content": "You could describe an AI agent that reads a GitHub issue, creates a failing integration test, modifies the implementation, runs the test suite, opens a pull request, and explains the change. This example is concrete and shows both the promise and the risks of agentic workflows."
+    },
+    {
+      "role": "user",
+      "content": "What risks should I mention for that example?"
+    },
+    {
+      "role": "assistant",
+      "content": "Mention brittle tests, hidden assumptions, overfitting to the test suite, insecure code changes, poor dependency choices, hallucinated explanations, and the need for human review before merging."
+    },
+    {
+      "role": "user",
+      "content": "Can you give me a short transition from the example to the evaluation section?"
+    },
+    {
+      "role": "assistant",
+      "content": "A useful transition would be: This example sounds straightforward, but it exposes the central evaluation problem: we do not only need to know whether the agent produced a passing test or a working patch. We need to know whether it understood the task, changed the right behavior, avoided regressions, and produced a result that humans can trust."
+    },
+    {
+      "role": "user",
+      "content": "Nice. Now give me three slide titles for the evaluation part."
+    },
+    {
+      "role": "assistant",
+      "content": "Three slide titles could be: Beyond Pass or Fail, Measuring Agent Reliability, and From Benchmarks to Real-World Trust."
+    },
+    {
+      "role": "user",
+      "content": "Please make the titles sound a bit more academic."
+    },
+    {
+      "role": "assistant",
+      "content": "More academic versions would be: Limitations of Binary Success Metrics, Reliability Assessment for Agentic Software Systems, and External Validity in AI Agent Benchmarks."
+    },
+    {
+      "role": "user",
+      "content": "Can you draft a 100-word abstract for the talk?"
+    },
+    {
+      "role": "assistant",
+      "content": "This talk examines the emerging role of autonomous AI agents in software engineering, with a focus on their ability to plan, implement, test, and explain code changes. Using a realistic software testing workflow as a motivating example, the talk highlights both the productivity potential and the reliability challenges of agentic systems. Particular attention is given to evaluation: how to measure correctness, robustness, transparency, and trust beyond simple pass/fail outcomes. The talk concludes by outlining open research questions for building AI agents that are useful, safe, and accountable in real-world development environments."
+    },
+    {
+      "role": "user",
+      "content": "End the chat with the speaker asking the AI to save this as the final abstract."
+    }
+  ]
+}

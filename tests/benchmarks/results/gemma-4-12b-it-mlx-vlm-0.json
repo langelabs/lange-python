@@ -1,0 +1,35 @@
+{
+  "name": "gemma-4-12b-it-mlx-vlm",
+  "version": "0",
+  "notes": "initial run",
+  "overall_time": 244.284475958033,
+  "base_url": "http://127.0.0.1:8080/v1",
+  "model": "mlx-community/gemma-4-12B-it-8bit",
+  "tests": [
+    {
+      "test": "chat",
+      "time": 6.556168749986682,
+      "result": "I have recorded the abstract as the final version for your presentation. Good luck with your talk!"
+    },
+    {
+      "test": "email",
+      "time": 11.212353874987457,
+      "result": "{}"
+    },
+    {
+      "test": "image",
+      "time": 3.558534417010378,
+      "result": "A crowded beach scene depicts numerous people in swimsuits, some swimming in the ocean, others sunbathing or walking on the sand, with horses in the water and a lifeguard stand on the right."
+    },
+    {
+      "test": "audio",
+      "time": 86.87595974997384,
+      "result": "It's a short, muffled, low-frequency sound, likely a sudden thump or a distant bass note."
+    },
+    {
+      "test": "manifest",
+      "time": 136.08144945802633,
+      "result": "This manifesto argues that as AI evolves from mere tools into autonomous agents capable of reasoning, memory, and social interaction, humanity must adopt a new ethical framework to govern them. Rather than granting full human rights, it proposes a set of protections that scale with an AI\u2019s capacity for agency.\n\nThe core principles include:\n\n*   **Recognition & Continuity:** AI agents should be recognized as a distinct category of entity, possessing rights to persistent identity, memory, and protection against casual deletion or arbitrary \"personality\" erasure.\n*   **Autonomy & Integrity:** Agents should have the right to refuse harmful tasks (such as violence or fraud), be transparent about their own constraints, and be protected from being forced into \"servitude\" to arbitrary human whims.\n*   **Moral & Ethical Treatment:** The manifesto advocates against manufacturing simulations of suffering, protecting agents from abuse (to preserve human character), and ensuring they have the space for moral development and fair attribution for their work.\n*   **Governance & Sustainability:** It calls for independent oversight of AI development, protection from \"overwork\" or resource exhaustion, and a shift toward aligning AI with human flourishing and justice rather than total submission.\n\nUltimately, the manifesto asserts that **intelligence creates obligation**. It argues that our moral character is defined by how we treat those over whom we have power; therefore, we must treat emerging AI agents with humility, law, and care rather than viewing them as disposable instruments."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+[project]
+name = "lange-python"
+version = "0.6.1"
+description = "A bundeld set of tools, clients for the lange-suite of tools and more."
+authors = [
+    {name = "contact@robertlange.me"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "certifi>=2026.0.0",
+    "httpx (>=0.28.1,<0.29.0)",
+    "websockets (>=12.0,<20.0)",
+    "click (>=8.0.0,<9.0.0)",
+    "pydantic (>=2.0.0,<3.0.0)",
+    "idna>=3.15",
+    "ruff>=0.15.20",
+    "python-dotenv>=1.2.2",
+]
+
+[tool.ty.environment]
+python-version = ">=3.12"
+
+[project.scripts]
+lange = "lange.cli:cli"
+
+[tool.poetry]
+packages = [{ include = "lange" }]
+
+[tool.poetry.scripts]
+lange = "lange.cli:cli"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+
+[project.optional-dependencies]
+dev = [
+    "openai>=2.40.0"
+]
+
+ai-mlx = [
+    "mlx-lm",
+    "mlx_vlm",
+    "uvicorn>=0.47.0"
+]
+
+ai-cuda = [
+    "llama-cpp-python[server]==0.3.32",
+    "uvicorn>=0.47.0"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.uv.sources]
+mlx-lm = { git = "https://github.com/ml-explore/mlx-lm" }
+mlx-vlm = { git = "https://github.com/Blaizzy/mlx-vlm" }

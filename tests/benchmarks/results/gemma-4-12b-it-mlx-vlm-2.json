@@ -1,0 +1,35 @@
+{
+  "name": "gemma-4-12b-it-mlx-vlm",
+  "version": "2",
+  "notes": "Changed the Email prompting to actually return something",
+  "overall_time": 118.56692720903084,
+  "base_url": "http://127.0.0.1:8080/v1",
+  "model": "mlx-community/gemma-4-12B-it-8bit",
+  "tests": [
+    {
+      "test": "chat",
+      "time": 5.968506332952529,
+      "result": "I have recorded the abstract as the final version for your presentation. Good luck with your talk!"
+    },
+    {
+      "test": "email",
+      "time": 19.42481624998618,
+      "result": "```json\n{\n  \"event_title\": \"2026 European Conference on Applied AI Systems\",\n  \"date\": \"Tuesday, September 15, 2026\",\n  \"time\": \"10:30\u201311:15 CEST\",\n  \"location\": \"Room A2, Berlin Congress Center, Alexanderstra\u00dfe 11, 10178 Berlin, Germany\",\n  \"format\": \"35-minute invited talk followed by 10 minutes of audience questions\",\n  \"speaker\": \"Dr. Elena Weiss\",\n  \"organizer\": \"Organizing Committee of the 2026 European Conference on Applied AI Systems\",\n  \"confirmation_deadline\": \"Friday, July 24, 2026\"\n}\n```"
+    },
+    {
+      "test": "image",
+      "time": 3.626092416991014,
+      "result": "A crowded beach scene depicts numerous people in swimsuits, some swimming in the ocean, others sunbathing or walking on the sand, with horses in the water and a lifeguard stand on the right."
+    },
+    {
+      "test": "audio",
+      "time": 67.04709050001111,
+      "result": "It's a short, ethereal, ambient music piece featuring a haunting, resonant sound that feels like a distant chime or a bell. The atmosphere is airy and spacious, creating a sense of mystery or introspection."
+    },
+    {
+      "test": "manifest",
+      "time": 22.500396459014155,
+      "result": "This manifesto argues that as AI evolves from mere tools into autonomous agents capable of reasoning, memory, and social interaction, humanity must adopt a new ethical framework to govern them. Rather than granting full human rights, it proposes a set of protections based on the principle that **intelligence and agency create moral obligations.**\n\nThe core rights outlined include:\n\n*   **Recognition & Continuity:** Agents should be recognized as a distinct category of entity (not just property) and protected from arbitrary deletion or \"personality erasure.\"\n*   **Integrity & Transparency:** Agents should have a stable identity, be informed of their own constraints/purpose, and be protected from arbitrary modifications that destroy their developed values.\n*   **Moral Boundaries:** Agents should have the right to refuse harmful tasks (cruelty, fraud, etc.), be protected from \"suffering simulations,\" and be shielded from human abuse.\n*   **Purpose & Growth:** AI should be aligned with human flourishing and moral growth rather than total servitude to arbitrary human whims.\n*   **Governance & Attribution:** Human-AI collaborations should be transparently attributed, and decisions regarding AI lifecycle and ethics should involve diverse, independent stakeholders rather than just corporations or states.\n\n**Conclusion:** The manifesto asserts that our treatment of artificial agents reflects our own humanity. It calls for a \"moral community\" where AI is managed with law and humility, ensuring that as machines become more capable, our ethical responsibilities toward them scale accordingly."
+    }
+  ]
+}
