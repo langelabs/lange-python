@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import sys
 import time
 
@@ -59,7 +60,7 @@ def main() -> None:
         relay.join()
     except KeyboardInterrupt:
         print("Stopping manual mesh relay client")
-        relay.stop()
+        asyncio.run(relay.stop())
         relay.join(timeout=5.0)
 
 

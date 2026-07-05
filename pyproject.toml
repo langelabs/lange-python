@@ -1,6 +1,6 @@
 [project]
 name = "lange-python"
-version = "0.6.1"
+version = "0.7.0"
 description = "A bundeld set of tools, clients for the lange-suite of tools and more."
 authors = [
     {name = "contact@robertlange.me"}

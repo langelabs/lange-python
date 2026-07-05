@@ -1,3 +1,4 @@
+import asyncio
 import time
 from lange.mesh.worker import MeshWorker
 
@@ -33,7 +34,7 @@ def main() -> None:
         relay.join()
     except KeyboardInterrupt:
         print("Stopping remote manual mesh relay client")
-        relay.stop()
+        asyncio.run(relay.stop())
         relay.join(timeout=5.0)
 
 if __name__ == "__main__":
