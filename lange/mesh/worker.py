@@ -189,7 +189,7 @@ class MeshWorker:
         if self.client and self.client.ready:
             return MeshMessage(status="ready", data=None, type="manage")
         else:
-            return return MeshMessage(status="pending", data=None, type="manage")
+            return MeshMessage(status="pending", data=None, type="manage")
 
     async def _handle_relay_request(self, message: MeshMessage) -> MeshMessage | None:
         """Forward one relay request to the local target.
