@@ -44,6 +44,12 @@ class AiModelRegistration(BaseModel):
     reasoning_start_tag: str|None
     reasoning_end_tag: str|None
 
+class AiModelKVCacheConfig(BaseModel):
+    kv_bits: float | None = 8,
+    kv_quant_scheme: Literal["uniform", "turboquant"] = "uniform",
+    kv_group_size: int = 64,
+    kv_max_size: int | None = None,
+
 class AiModelConfig(BaseModel):
     # The name of the model to launch
     model_name: str
@@ -71,3 +77,6 @@ class AiModelConfig(BaseModel):
     model_format: Literal["mlx", "vLLM", "gguf"] | None = None
 
     registration: AiModelRegistration | None
+
+    # kv cache config
+    kv_cache_config: AiModelKVCacheConfig|None = None

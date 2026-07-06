@@ -20,13 +20,6 @@ class MlxVlmServer(threading.Thread):
         # Increase only if you repeatedly ask about the same images.
         vision_cache_size: int = 6,
 
-        # KV cache tuning. 8 is a safe default.
-        # For very long context / memory pressure try 4 or 3.5 + turboquant.
-        kv_bits: float | None = 8,
-        kv_quant_scheme: str = "uniform",  # "uniform" or "turboquant"
-        kv_group_size: int = 64,
-        max_kv_size: int | None = None,
-
         # Thinking costs tokens and latency. Keep off for serving.
         enable_thinking: bool = False,
         thinking_budget: int | None = None,
@@ -52,11 +45,6 @@ class MlxVlmServer(threading.Thread):
 
         self.vision_cache_size = vision_cache_size
 
-        self.kv_bits = kv_bits
-        self.kv_quant_scheme = kv_quant_scheme
-        self.kv_group_size = kv_group_size
-        self.max_kv_size = max_kv_size
-
         self.enable_thinking = enable_thinking
         self.thinking_budget = thinking_budget
 
@@ -80,7 +68,7 @@ class MlxVlmServer(threading.Thread):
 
         # APC is useful for repeated long prefixes, but mlx-vlm docs say APC is skipped
         # when KV-cache quantization is enabled.
-        if self.apc_enabled and self.kv_bits is None:
+        if self.apc_enabled and (self.model.kv_cache_config is None or self.model.kv_cache_config.kv_bits is None):
             env["APC_ENABLED"] = "1"
             env["APC_NUM_BLOCKS"] = str(self.apc_num_blocks)
 
@@ -118,16 +106,18 @@ class MlxVlmServer(threading.Thread):
             if self.thinking_budget is not None:
                 cmd.extend(["--thinking-budget", str(self.thinking_budget)])
 
-        if self.kv_bits is not None:
-            cmd.extend(["--kv-bits", str(self.kv_bits)])
-            cmd.extend(["--kv-quant-scheme", self.kv_quant_scheme])
-            cmd.extend(["--kv-group-size", str(self.kv_group_size)])
+        if self.model.kv_cache_config:
+            if self.model.kv_cache_config.kv_bits is not None:
+                cmd.extend(["--kv-bits", str(self.model.kv_cache_config.kv_bits)])
+                cmd.extend(["--kv-quant-scheme", self.model.kv_cache_config.kv_quant_scheme])
+                cmd.extend(["--kv-group-size", str(self.model.kv_cache_config.kv_group_size)])
 
-        if self.max_kv_size is not None:
-            cmd.extend(["--max-kv-size", str(self.max_kv_size)])
+            if self.model.kv_cache_config.kv_max_size is not None:
+                cmd.extend(["--max-kv-size", str(self.model.kv_cache_config.kv_max_size)])
 
-        self.process = subprocess.Popen(cmd, env=env)
-        self.process.wait()
+        _process = subprocess.Popen(cmd, env=env)
+        self.process = _process
+        _process.wait()
 
     def stop(self) -> None:
         if self.process and self.process.poll() is None:

@@ -15,19 +15,11 @@ class LlamaCppServer(threading.Thread):
         model: AiModelConfig,
         host: str = "127.0.0.1",
         port: int = 8080,
-        n_gpu_layers: int = -1,
-        n_threads: int | None = None,
-        n_threads_batch: int | None = None,
-        chat_format: str | None = None,
     ) -> None:
         super().__init__(daemon=True)
         self.model = model
         self.host = host
         self.port = port
-        self.n_gpu_layers = n_gpu_layers
-        self.n_threads = n_threads
-        self.n_threads_batch = n_threads_batch
-        self.chat_format = chat_format
 
     def run(self):
         # download the model
@@ -43,11 +35,6 @@ class LlamaCppServer(threading.Thread):
                 ModelSettings(
                     model=self._resolve_model_path(model_path),
                     model_alias=self.model.model_alias,
-                    n_ctx=self.model.registration.context_length,
-                    n_gpu_layers=self.n_gpu_layers,
-                    n_threads=self.n_threads,
-                    n_threads_batch=self.n_threads_batch,
-                    chat_format=self.chat_format,
                     verbose=True,
                 )
             ],

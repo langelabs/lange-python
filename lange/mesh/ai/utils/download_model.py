@@ -3,7 +3,7 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from contracts import AiModelConfig
+from ....contracts import AiModelConfig
 
 
 def get_primary_model_spec(model: AiModelConfig):
