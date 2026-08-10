@@ -13,7 +13,7 @@ permissions:
 jobs:
   test:
     name: Test and build
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
@@ -32,7 +32,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run pytest
-        run: uv run --with pytest pytest -q
+        run: uv run --all-extras --with pytest pytest -q
 
       - name: Set up Python
         uses: actions/setup-python@v6
