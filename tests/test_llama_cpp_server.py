@@ -1,11 +1,12 @@
 """Tests for llama.cpp server configuration mapping."""
 
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
-from lange.contracts.ai_model import (
+from lange.ai.contracts import (
     AIModelSpecs,
     AiModelConfig,
     AiModelKVCacheConfig,
@@ -13,7 +14,7 @@ from lange.contracts.ai_model import (
     AiModelRuntimeConfig,
     AiModelVirtualEnvironment,
 )
-from lange.mesh.ai.servers import llama_cpp
+from lange.ai.servers import llama_cpp
 
 
 def _model_config(
@@ -105,13 +106,20 @@ def _capture_model_settings(
         captured["model_settings"] = model_settings
         return "fake-app"
 
-    def fake_uvicorn_run(app: Any, *, host: str, port: int, log_level: str) -> None:
-        """Capture uvicorn launch arguments.
+    def fake_uvicorn_config(
+        app: Any,
+        *,
+        host: str,
+        port: int,
+        log_level: str,
+    ) -> Any:
+        """Capture uvicorn configuration.
 
         :param app: ASGI app passed to uvicorn.
         :param host: Server host.
         :param port: Server port.
         :param log_level: Uvicorn log level.
+        :returns: Captured uvicorn configuration.
         """
         captured["uvicorn"] = {
             "app": app,
@@ -119,15 +127,35 @@ def _capture_model_settings(
             "port": port,
             "log_level": log_level,
         }
+        return SimpleNamespace(app=app, host=host, port=port, log_level=log_level)
 
-    monkeypatch.setattr(llama_cpp, "download_model", lambda _: Path("/tmp/model.gguf"))
+    class FakeUvicornServer:
+        """Avoid binding a network socket in server-mapping tests."""
+
+        def __init__(self, config: Any) -> None:
+            """Store the fake uvicorn config.
+
+            :param config: Uvicorn server configuration.
+            """
+            self.config = config
+            self.should_exit = False
+
+        def run(self) -> None:
+            """Return without binding a network socket."""
+
+    monkeypatch.setattr(
+        llama_cpp.LlamaCppServer,
+        "download",
+        lambda _: Path("/tmp/model.gguf"),
+    )
     monkeypatch.setattr(
         llama_cpp.LlamaCppServer,
         "_resolve_model_path",
         staticmethod(lambda _: "/tmp/model.gguf"),
     )
     monkeypatch.setattr(llama_cpp, "create_app", fake_create_app)
-    monkeypatch.setattr(llama_cpp.uvicorn, "run", fake_uvicorn_run)
+    monkeypatch.setattr(llama_cpp.uvicorn, "Config", fake_uvicorn_config)
+    monkeypatch.setattr(llama_cpp.uvicorn, "Server", FakeUvicornServer)
 
     server = llama_cpp.LlamaCppServer(model, host="127.0.0.2", port=8501)
     server.run()
@@ -243,3 +271,62 @@ def test_llama_cpp_rejects_unsupported_kv_cache_bits(
             monkeypatch,
             _model_config(kv_cache_config=AiModelKVCacheConfig(kv_bits=4)),
         )
+
+
+def test_llama_cpp_stop_signals_uvicorn_server() -> None:
+    """Request graceful shutdown from the active uvicorn server."""
+    server = llama_cpp.LlamaCppServer(_model_config())
+    uvicorn_server = SimpleNamespace(should_exit=False)
+    server.uvicorn_server = uvicorn_server
+
+    server.stop()
+
+    assert uvicorn_server.should_exit
+
+
+def test_llama_cpp_run_retains_uvicorn_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retain the uvicorn server so plugin shutdown can signal it."""
+    created: list[Any] = []
+
+    class FakeUvicornServer:
+        """Record uvicorn server construction and execution."""
+
+        def __init__(self, config: Any) -> None:
+            """Capture the uvicorn config.
+
+            :param config: Uvicorn server configuration.
+            """
+            self.config = config
+            self.ran = False
+            self.should_exit = False
+            created.append(self)
+
+        def run(self) -> None:
+            """Record server execution."""
+            self.ran = True
+
+    monkeypatch.setattr(
+        llama_cpp.LlamaCppServer,
+        "download",
+        lambda _: Path("/tmp/model.gguf"),
+    )
+    monkeypatch.setattr(
+        llama_cpp.LlamaCppServer,
+        "_resolve_model_path",
+        staticmethod(lambda _: "/tmp/model.gguf"),
+    )
+    monkeypatch.setattr(llama_cpp, "create_app", lambda **_: "fake-app")
+    monkeypatch.setattr(
+        llama_cpp.uvicorn,
+        "Config",
+        lambda app, **kwargs: SimpleNamespace(app=app, **kwargs),
+    )
+    monkeypatch.setattr(llama_cpp.uvicorn, "Server", FakeUvicornServer)
+    server = llama_cpp.LlamaCppServer(_model_config())
+
+    server.run()
+
+    assert server.uvicorn_server is created[0]
+    assert created[0].ran

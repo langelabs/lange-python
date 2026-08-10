@@ -599,7 +599,7 @@ wheels = [
 
 [[package]]
 name = "lange-python"
-version = "0.8.0"
+version = "0.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "certifi", marker = "sys_platform == 'darwin'" },
@@ -614,16 +614,20 @@ dependencies = [
 
 [package.optional-dependencies]
 ai-cuda = [
+    { name = "huggingface-hub", marker = "sys_platform == 'darwin'" },
     { name = "llama-cpp-python", extra = ["server"], marker = "sys_platform == 'darwin'" },
+    { name = "tqdm", marker = "sys_platform == 'darwin'" },
     { name = "uvicorn", marker = "sys_platform == 'darwin'" },
 ]
 ai-mlx = [
     { name = "fastapi", marker = "sys_platform == 'darwin'" },
+    { name = "huggingface-hub", marker = "sys_platform == 'darwin'" },
     { name = "mflux", marker = "sys_platform == 'darwin'" },
     { name = "mlx-embeddings", marker = "sys_platform == 'darwin'" },
     { name = "mlx-lm", marker = "sys_platform == 'darwin'" },
     { name = "mlx-vlm", marker = "sys_platform == 'darwin'" },
     { name = "openai", marker = "sys_platform == 'darwin'" },
+    { name = "tqdm", marker = "sys_platform == 'darwin'" },
     { name = "uvicorn", marker = "sys_platform == 'darwin'" },
 ]
 
@@ -633,6 +637,8 @@ requires-dist = [
     { name = "click", specifier = ">=8.0.0,<9.0.0" },
     { name = "fastapi", marker = "extra == 'ai-mlx'", specifier = ">=0.139.0" },
     { name = "httpx", specifier = ">=0.28.1,<0.29.0" },
+    { name = "huggingface-hub", marker = "extra == 'ai-cuda'", specifier = ">=0.35.0" },
+    { name = "huggingface-hub", marker = "extra == 'ai-mlx'", specifier = ">=0.35.0" },
     { name = "idna", specifier = ">=3.15" },
     { name = "llama-cpp-python", extras = ["server"], marker = "extra == 'ai-cuda'", specifier = "==0.3.32" },
     { name = "mflux", marker = "extra == 'ai-mlx'", git = "https://github.com/filipstrand/mflux?rev=97ac5e6280e8c65e48a609722229eb9d03ef2cbe" },
@@ -643,6 +649,8 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0.0,<3.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "ruff", specifier = ">=0.15.20" },
+    { name = "tqdm", marker = "extra == 'ai-cuda'", specifier = ">=4.67.0" },
+    { name = "tqdm", marker = "extra == 'ai-mlx'", specifier = ">=4.67.0" },
     { name = "uvicorn", marker = "extra == 'ai-cuda'", specifier = ">=0.47.0" },
     { name = "uvicorn", marker = "extra == 'ai-mlx'", specifier = ">=0.47.0" },
     { name = "websockets", specifier = ">=12.0,<20.0" },

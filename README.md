@@ -2,6 +2,13 @@
 
 Python helpers for Lange services.
 
+The package is organized into two public domains:
+
+- `lange.mesh` contains mesh workers and plugins; its wire models live in
+  `lange.mesh.contracts`.
+- `lange.ai` contains AI inference plugins, models, and servers; its model
+  configuration types live in `lange.ai.contracts`.
+
 ## Mesh Relay Worker
 
 `MeshWorker` connects a local HTTP service to the Lange mesh relay and forwards
@@ -16,11 +23,11 @@ import asyncio
 import os
 import time
 
-from lange.mesh.worker import MeshWorker
+from lange.mesh import MeshRelayPlugin, MeshWorker
 
 relay = MeshWorker(
     project_id=os.environ["MESH_PROJECT_ID"],
-    relay_target="http://localhost:3000",
+    plugins=[MeshRelayPlugin("http://localhost:3000")],
 )
 
 relay.start()
@@ -44,11 +51,11 @@ hardcoding them in application code.
 ```python
 import os
 
-from lange.mesh.worker import MeshWorker
+from lange.mesh import MeshRelayPlugin, MeshWorker
 
 relay = MeshWorker(
     project_id=os.environ["MESH_PROJECT_ID"],
-    relay_target="http://localhost:3000",
+    plugins=[MeshRelayPlugin("http://localhost:3000")],
     api_key=os.environ["LANGE_LABS_API_KEY"],
 )
 ```
@@ -61,4 +68,31 @@ Stop the worker from an async context:
 
 ```python
 await relay.stop()
+```
+
+## AI Inference Plugins
+
+Install the backend required by the host platform, then attach one plugin per
+model. Default ports are assigned from `8500` in plugin order and can be
+overridden explicitly.
+
+```bash
+pip install "lange-python[ai-mlx]"
+```
+
+```python
+from lange.ai import MeshAiPlugin
+from lange.ai.contracts import AiModelConfig
+from lange.mesh import MeshWorker
+
+model = AiModelConfig(
+    model_name="example/model",
+    model_alias="example",
+    model_type="LLM",
+    registration=None,
+)
+worker = MeshWorker(
+    project_id="00000000-0000-0000-0000-000000000001",
+    plugins=[MeshAiPlugin(model)],
+)
 ```

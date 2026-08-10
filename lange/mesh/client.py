@@ -1,22 +1,25 @@
+import asyncio
 import ssl
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from typing import Any, Coroutine
-import uuid
 
 import certifi
+import websockets
 from websockets import ClientConnection
 
-from lange.contracts import MeshMessage
-import asyncio
-import websockets
+from lange.mesh.contracts import MeshMessage
 
 
 class MeshClient(threading.Thread):
     def __init__(
         self,
-        handler: Callable[[MeshMessage], Coroutine[Any, Any, None]],
+        handler: Callable[
+            [MeshMessage],
+            Coroutine[Any, Any, MeshMessage | None],
+        ],
         remote_base_url: str,
         project_id: uuid.UUID | str,
         api_key: str | None = None,
@@ -112,11 +115,7 @@ class MeshClient(threading.Thread):
             self.loop = None
             return
 
-        headers = (
-            {"Authorization": f"Bearer {self.api_key}"}
-            if self.api_key
-            else {}
-        )
+        headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         ssl_context.set_alpn_protocols(["http/1.1"])
@@ -148,16 +147,17 @@ class MeshClient(threading.Thread):
 
     async def accept_requests(self, websocket: ClientConnection) -> None:
         """Receive encoded ``MeshMessage`` requests from the websocket and forward them
-        to the configured handler.
+        concurrently to the configured handler.
 
         :param websocket: Connected websocket to consume.
         """
-        async for raw_message in websocket:
-            if isinstance(raw_message, bytes):
-                raw_message = raw_message.decode("utf-8")
+        async with asyncio.TaskGroup() as handlers:
+            async for raw_message in websocket:
+                if isinstance(raw_message, bytes):
+                    raw_message = raw_message.decode("utf-8")
 
-            request = MeshMessage.model_validate_json(raw_message)
-            await self.handler(request)
+                request = MeshMessage.model_validate_json(raw_message)
+                handlers.create_task(self.handler(request))
 
     async def stop(self) -> None:
         """Close the active websocket connection.

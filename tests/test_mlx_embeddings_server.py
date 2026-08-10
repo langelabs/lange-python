@@ -1,16 +1,15 @@
 """Tests for the MLX embeddings OpenAI-compatible server."""
 
 from pathlib import Path
-import sys
-import types
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 
-from lange.contracts.ai_model import AiModelConfig
-from lange.mesh.ai import servers
-from servers.mlx import mlx_embeddings as mlx_embeddings_server
+from lange.ai.contracts import AiModelConfig
+from lange.ai import plugin as ai_plugin
+from lange.ai.servers.mlx import mlx_embeddings as mlx_embeddings_server
 
 
 class _FakeEmbeddingArray:
@@ -95,7 +94,9 @@ def _capture_app(monkeypatch: pytest.MonkeyPatch) -> tuple[TestClient, dict[str,
     class FakeModel:
         """Fake EmbeddingGemma model used to capture positional calls."""
 
-        def __call__(self, *args: _FakeTokenIds, **kwargs: _FakeTokenIds) -> _FakeEmbeddingOutput:
+        def __call__(
+            self, *args: _FakeTokenIds, **kwargs: _FakeTokenIds
+        ) -> _FakeEmbeddingOutput:
             """Capture the positional embedding model call.
 
             :param args: Positional model inputs.
@@ -150,9 +151,7 @@ def _capture_app(monkeypatch: pytest.MonkeyPatch) -> tuple[TestClient, dict[str,
                 "input_ids": _FakeTokenIds(
                     [[index, index + 10] for index, _ in enumerate(texts)]
                 ),
-                "attention_mask": _FakeTokenIds(
-                    [[1, 1] for _ in texts]
-                ),
+                "attention_mask": _FakeTokenIds([[1, 1] for _ in texts]),
             }
 
     def fake_load(path_or_hf_repo: str) -> tuple[FakeModel, FakeTokenizer]:
@@ -164,20 +163,39 @@ def _capture_app(monkeypatch: pytest.MonkeyPatch) -> tuple[TestClient, dict[str,
         captured["loaded_path"] = path_or_hf_repo
         return FakeModel(), FakeTokenizer()
 
-    def fake_uvicorn_run(app: Any, *, host: str, port: int) -> None:
-        """Capture uvicorn launch arguments.
+    def fake_uvicorn_config(app: Any, *, host: str, port: int) -> Any:
+        """Capture uvicorn configuration.
 
         :param app: FastAPI app passed to uvicorn.
         :param host: Server host.
         :param port: Server port.
+        :returns: Captured uvicorn configuration.
         """
         captured["app"] = app
         captured["host"] = host
         captured["port"] = port
+        return SimpleNamespace(app=app, host=host, port=port)
 
-    monkeypatch.setattr(mlx_embeddings_server.MLXEmbeddingsServer, "download", fake_download)
+    class FakeUvicornServer:
+        """Avoid binding a network socket in API tests."""
+
+        def __init__(self, config: Any) -> None:
+            """Store the fake uvicorn config.
+
+            :param config: Uvicorn server configuration.
+            """
+            self.config = config
+            self.should_exit = False
+
+        def run(self) -> None:
+            """Return without binding a network socket."""
+
+    monkeypatch.setattr(
+        mlx_embeddings_server.MLXEmbeddingsServer, "download", fake_download
+    )
     monkeypatch.setattr(mlx_embeddings_server, "load", fake_load)
-    monkeypatch.setattr(mlx_embeddings_server.uvicorn, "run", fake_uvicorn_run)
+    monkeypatch.setattr(mlx_embeddings_server.uvicorn, "Config", fake_uvicorn_config)
+    monkeypatch.setattr(mlx_embeddings_server.uvicorn, "Server", FakeUvicornServer)
 
     server = mlx_embeddings_server.MLXEmbeddingsServer(
         _model_config(),
@@ -291,7 +309,9 @@ def test_mlx_embeddings_server_rejects_dimensions_override(
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Embedding dimensions override is not supported."
+    assert (
+        response.json()["detail"] == "Embedding dimensions override is not supported."
+    )
 
 
 def test_mlx_embeddings_server_rejects_tokenized_input(
@@ -305,7 +325,7 @@ def test_mlx_embeddings_server_rejects_tokenized_input(
     assert response.status_code == 422
 
 
-def test_start_ai_models_uses_embedding_server_for_embedding_model(
+def test_server_factory_uses_embedding_server_for_embedding_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Assert Darwin embedding models start with the MLX embeddings server.
@@ -317,31 +337,99 @@ def test_start_ai_models_uses_embedding_server_for_embedding_model(
     class FakeEmbeddingServer:
         """Fake MLX embeddings server used to capture startup."""
 
-        def __init__(self, model: AiModelConfig, *, port: int) -> None:
+        def __init__(
+            self,
+            model: AiModelConfig,
+            *,
+            host: str,
+            port: int,
+        ) -> None:
             """Capture model and port.
 
             :param model: Model config passed to the worker.
+            :param host: Worker bind host.
             :param port: Worker port.
             """
             self.model = model
+            self.host = host
             self.port = port
 
         def start(self) -> None:
             """Record that the fake worker was started."""
             started_models.append(self.model)
 
-    fake_embeddings_module = types.ModuleType("lange.mesh.ai.servers.mlx_embeddings")
-    fake_embeddings_module.MLXEmbeddingsServer = FakeEmbeddingServer
-    fake_vlm_module = types.ModuleType("lange.mesh.ai.servers.mlx_vlm")
-    fake_vlm_module.MlxVlmServer = object
+    monkeypatch.setattr(ai_plugin, "get_platform", lambda: "Darwin")
+    monkeypatch.setattr(
+        "lange.ai.servers.mlx.MLXEmbeddingsServer",
+        FakeEmbeddingServer,
+    )
 
-    monkeypatch.setattr(servers, "get_platform", lambda: "Darwin")
-    monkeypatch.setitem(sys.modules, "lange.mesh.ai.servers.mlx_embeddings", fake_embeddings_module)
-    monkeypatch.setitem(sys.modules, "lange.mesh.ai.servers.mlx_vlm", fake_vlm_module)
+    worker = ai_plugin.create_inference_server(
+        _model_config(),
+        host="127.0.0.1",
+        port=8500,
+    )
+    worker.start()
 
-    workers = servers.start_ai_models([_model_config()])
-
-    assert len(workers) == 1
-    assert isinstance(workers[0], FakeEmbeddingServer)
-    assert workers[0].port == 8500
+    assert isinstance(worker, FakeEmbeddingServer)
+    assert worker.host == "127.0.0.1"
+    assert worker.port == 8500
     assert started_models == [_model_config()]
+
+
+def test_mlx_embeddings_stop_signals_uvicorn_server() -> None:
+    """Request graceful shutdown from the active uvicorn server."""
+    server = mlx_embeddings_server.MLXEmbeddingsServer(_model_config())
+    uvicorn_server = SimpleNamespace(should_exit=False)
+    server.uvicorn_server = uvicorn_server
+
+    server.stop()
+
+    assert uvicorn_server.should_exit
+
+
+def test_mlx_embeddings_run_retains_uvicorn_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retain the uvicorn server so plugin shutdown can signal it."""
+    created: list[Any] = []
+
+    class FakeUvicornServer:
+        """Record uvicorn server construction and execution."""
+
+        def __init__(self, config: Any) -> None:
+            """Capture the uvicorn config.
+
+            :param config: Uvicorn server configuration.
+            """
+            self.config = config
+            self.ran = False
+            self.should_exit = False
+            created.append(self)
+
+        def run(self) -> None:
+            """Record server execution."""
+            self.ran = True
+
+    monkeypatch.setattr(
+        mlx_embeddings_server.MLXEmbeddingsServer,
+        "download",
+        lambda _: Path("/tmp/embedding-model"),
+    )
+    monkeypatch.setattr(
+        mlx_embeddings_server,
+        "load",
+        lambda _: (object(), object()),
+    )
+    monkeypatch.setattr(
+        mlx_embeddings_server.uvicorn,
+        "Config",
+        lambda app, **kwargs: SimpleNamespace(app=app, **kwargs),
+    )
+    monkeypatch.setattr(mlx_embeddings_server.uvicorn, "Server", FakeUvicornServer)
+    server = mlx_embeddings_server.MLXEmbeddingsServer(_model_config())
+
+    server.run()
+
+    assert server.uvicorn_server is created[0]
+    assert created[0].ran

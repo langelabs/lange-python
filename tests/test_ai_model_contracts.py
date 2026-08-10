@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from lange.contracts.ai_model import (
+from lange.ai.contracts import (
     AIModelSpecs,
     AiModelConfig,
     AiModelKVCacheConfig,
@@ -49,7 +49,9 @@ def test_runtime_config_defaults_leave_engine_defaults_unset() -> None:
     assert config.seed is None
 
 
-def test_embedding_model_registration_accepts_fractional_size_and_embed_ability() -> None:
+def test_embedding_model_registration_accepts_fractional_size_and_embed_ability() -> (
+    None
+):
     """Assert embedding model metadata supports sub-billion parameter models."""
     spec = AIModelSpecs(
         model_format="mlx",
@@ -95,7 +97,7 @@ def test_embedding_model_registration_accepts_fractional_size_and_embed_ability(
 
 def test_embeddinggemma_mlx_model_config_matches_huggingface_metadata() -> None:
     """Assert the EmbeddingGemma MLX config exposes the expected metadata."""
-    from lange.mesh.ai.models.google.embeddinggemma.mlx import MODEL
+    from lange.ai.models.google.embeddinggemma.mlx import MODEL
 
     assert MODEL.model_name == "embeddinggemma-300m"
     assert MODEL.model_alias == "EMBEDDING_GEMMA_300M_MLX_6BIT"
@@ -109,7 +111,10 @@ def test_embeddinggemma_mlx_model_config_matches_huggingface_metadata() -> None:
     assert MODEL.registration.model_ability == ["embed"]
     assert MODEL.registration.context_length == 2048
     assert MODEL.registration.model_family == "embeddinggemma"
-    assert MODEL.registration.model_specs[0].model_id == "mlx-community/embeddinggemma-300m-6bit"
+    assert (
+        MODEL.registration.model_specs[0].model_id
+        == "mlx-community/embeddinggemma-300m-6bit"
+    )
     assert MODEL.registration.model_specs[0].model_size_in_billions == 0.3
 
 
@@ -124,7 +129,6 @@ def test_embeddinggemma_mlx_direct_run_does_not_shadow_mlx_package(
     module_path = (
         Path(__file__).resolve().parents[1]
         / "lange"
-        / "mesh"
         / "ai"
         / "models"
         / "google"
@@ -132,7 +136,7 @@ def test_embeddinggemma_mlx_direct_run_does_not_shadow_mlx_package(
         / "mlx.py"
     )
     script_dir = str(module_path.parent)
-    fake_servers_module = types.ModuleType("lange.mesh.ai.servers")
+    fake_servers_module = types.ModuleType("lange.ai.servers")
 
     def fake_start_ai_models(models: list[AiModelConfig]) -> list[object]:
         """Inspect ``mlx`` resolution at the same boundary as server startup.
@@ -148,7 +152,7 @@ def test_embeddinggemma_mlx_direct_run_does_not_shadow_mlx_package(
         return []
 
     fake_servers_module.start_ai_models = fake_start_ai_models
-    monkeypatch.setitem(sys.modules, "lange.mesh.ai.servers", fake_servers_module)
+    monkeypatch.setitem(sys.modules, "lange.ai.servers", fake_servers_module)
     monkeypatch.delitem(sys.modules, "mlx", raising=False)
     monkeypatch.delitem(sys.modules, "mlx.core", raising=False)
     monkeypatch.syspath_prepend(script_dir)

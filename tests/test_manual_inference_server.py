@@ -17,7 +17,7 @@ def test_llama_cpp_manual_config_uses_base_gguf_model() -> None:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    model = module.LLAMA_CPP_MODEL
+    model = module.LLAMA_CPP_CHAT_MODEL
     model_spec = model.registration.model_specs[0]
 
     assert model.quantization == "Q8_0"

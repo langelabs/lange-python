@@ -1,9 +1,9 @@
-from lange.contracts.ai_model import (
+from lange.ai.contracts import (
+    AIModelSpecs,
     AiModelConfig,
+    AiModelKVCacheConfig,
     AiModelRegistration,
     AiModelVirtualEnvironment,
-    AIModelSpecs,
-    AiModelKVCacheConfig
 )
 import asyncio
 from dotenv import load_dotenv
@@ -19,14 +19,9 @@ MLX_CHAT_MODEL = AiModelConfig(
     enable_thinking=True,
     model_format="mlx",
     model_engine="MLX",
-
     kv_cache_config=AiModelKVCacheConfig(
-        kv_bits=8,
-        kv_quant_scheme="uniform",
-        kv_group_size=64,
-        kv_max_size=None
+        kv_bits=8, kv_quant_scheme="uniform", kv_group_size=64, kv_max_size=None
     ),
-
     registration=AiModelRegistration(
         version=2,
         context_length=262144,
@@ -45,7 +40,7 @@ MLX_CHAT_MODEL = AiModelConfig(
                 model_uri=None,
                 model_revision=None,
                 activated_size_in_billions=None,
-                model_filename=None
+                model_filename=None,
             )
         ],
         chat_template=None,
@@ -68,74 +63,75 @@ MLX_CHAT_MODEL = AiModelConfig(
 )
 
 LLAMA_CPP_CHAT_MODEL = AiModelConfig(
+    model_name="gemma-4-12b-it",
+    model_alias="LL_C_0",
+    model_type="LLM",
+    size=12,
+    quantization="Q8_0",
+    enable_thinking=True,
+    model_format="gguf",
+    model_engine="llama.cpp",
+    registration=AiModelRegistration(
+        version=2,
+        context_length=262144,
         model_name="gemma-4-12b-it",
-        model_alias="LL_C_0",
-        model_type="LLM",
-        size=12,
-        quantization="Q8_0",
-        enable_thinking=True,
-        model_format="gguf",
-        model_engine="llama.cpp",
-        registration=AiModelRegistration(
-            version=2,
-            context_length=262144,
-            model_name="gemma-4-12b-it",
-            model_lang=["en"],
-            model_ability=["generate", "chat"],
-            model_description="Gemma 4 12B instruction model in GGUF format for llama.cpp.",
-            model_family="gemma-4",
-            model_specs=[
-                AIModelSpecs(
-                    model_format="gguf",
-                    model_size_in_billions=12,
-                    quantization="Q8_0",
-                    model_id="unsloth/gemma-4-12b-it-GGUF",
-                    model_hub="huggingface",
-                    model_uri=None,
-                    model_revision=None,
-                    activated_size_in_billions=None,
-                    model_filename="gemma-4-12b-it-Q8_0.gguf",
-                )
+        model_lang=["en"],
+        model_ability=["generate", "chat"],
+        model_description="Gemma 4 12B instruction model in GGUF format for llama.cpp.",
+        model_family="gemma-4",
+        model_specs=[
+            AIModelSpecs(
+                model_format="gguf",
+                model_size_in_billions=12,
+                quantization="Q8_0",
+                model_id="unsloth/gemma-4-12b-it-GGUF",
+                model_hub="huggingface",
+                model_uri=None,
+                model_revision=None,
+                activated_size_in_billions=None,
+                model_filename="gemma-4-12b-it-Q8_0.gguf",
+            )
+        ],
+        chat_template=None,
+        stop_token_ids=None,
+        stop=None,
+        reasoning_start_tag=None,
+        reasoning_end_tag=None,
+        cache_config=None,
+        virtualenv=AiModelVirtualEnvironment(
+            packages=[
+                "llama-cpp-python[server]",
+                "uvicorn",
+                "huggingface_hub[hf_transfer]",
             ],
-            chat_template=None,
-            stop_token_ids=None,
-            stop=None,
-            reasoning_start_tag=None,
-            reasoning_end_tag=None,
-            cache_config=None,
-            virtualenv=AiModelVirtualEnvironment(
-                packages=[
-                    "llama-cpp-python[server]",
-                    "uvicorn",
-                    "huggingface_hub[hf_transfer]",
-                ],
-                inherit_pip_config=True,
-                index_url=None,
-                extra_index_url=None,
-                find_links=None,
-                trusted_host=None,
-                no_build_isolation=None,
-            ),
-            is_builtin=False,
+            inherit_pip_config=True,
+            index_url=None,
+            extra_index_url=None,
+            find_links=None,
+            trusted_host=None,
+            no_build_isolation=None,
         ),
-    )
+        is_builtin=False,
+    ),
+)
 
 
-async def run_mlx():
-    from servers.mlx.mlx_llm import MlxLLMServer
+async def run_mlx() -> None:
+    """Start the configured MLX inference server."""
+    from lange.ai.servers.mlx.mlx_llm import MlxLLMServer
+
     inference = MlxLLMServer(MLX_CHAT_MODEL)
     inference.start()
     inference.join()
 
-async def run_llamacpp():
-    from lange.mesh.ai.servers.llama_cpp import LlamaCppServer
+
+async def run_llamacpp() -> None:
+    """Start the configured llama.cpp inference server."""
+    from lange.ai.servers.llama_cpp import LlamaCppServer
+
     inference = LlamaCppServer(LLAMA_CPP_CHAT_MODEL)
     inference.start()
     inference.join()
-
-
-
-
 
 
 if __name__ == "__main__":

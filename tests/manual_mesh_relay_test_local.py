@@ -37,11 +37,11 @@ def main() -> None:
 
     :returns: ``None``.
     """
-    from lange.mesh.worker import MeshWorker
+    from lange.mesh import MeshRelayPlugin, MeshWorker
 
     relay = MeshWorker(
         project_id=PROJECT_ID,
-        relay_target=FORWARD_TARGET,
+        plugins=[MeshRelayPlugin(FORWARD_TARGET)],
         remote_base_url=MESH_WEBSOCKET_HOST,
     )
 

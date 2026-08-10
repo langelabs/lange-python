@@ -3,9 +3,13 @@
 import pytest
 from pydantic import ValidationError
 
-from lange.contracts.mesh import MeshMessage
-from lange.contracts.relay import MeshRelayRequest, MeshRelayResponse
-from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
+from lange.mesh.contracts import (
+    MeshMessage,
+    MeshRelayRequest,
+    MeshRelayResponse,
+    MeshWorkerConfig,
+    MeshWorkerRegistration,
+)
 
 
 def test_mesh_rest_request_serializes_http_payload() -> None:
@@ -104,10 +108,7 @@ def test_mesh_message_accepts_relay_worker_config_payload() -> None:
     )
 
     assert isinstance(message.data, MeshWorkerConfig)
-    assert (
-        message.data.remote_relay_address
-        == "https://default.mesh.lange-labs.com/"
-    )
+    assert message.data.remote_relay_address == "https://default.mesh.lange-labs.com/"
     assert message.model_dump(mode="json")["data"] == {
         "remote_relay_address": "https://default.mesh.lange-labs.com/",
         "type": "REST",

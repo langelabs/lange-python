@@ -5,13 +5,13 @@ from typing import Any
 
 import pytest
 
-from lange.contracts.ai_model import (
+from lange.ai.contracts import (
     AIModelSpecs,
     AiModelConfig,
     AiModelRegistration,
     AiModelVirtualEnvironment,
 )
-from lange.mesh.ai.servers import __base
+from lange.ai.servers import __base
 
 
 class FakeInferenceServer(__base.InferenceServer):

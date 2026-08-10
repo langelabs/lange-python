@@ -1,11 +1,12 @@
 import asyncio
 import time
-from lange.mesh.worker import MeshWorker
+from lange.mesh import MeshRelayPlugin, MeshWorker
 
 
 MESH_WEBSOCKET_HOST = "wss://mesh.lange-labs.com"
 PROJECT_ID = "00000000-0000-0000-0000-000000000001"
 FORWARD_TARGET = "http://localhost:5173"
+
 
 def main() -> None:
     """Run a production manual mesh relay client until interrupted.
@@ -15,7 +16,7 @@ def main() -> None:
 
     relay = MeshWorker(
         project_id=PROJECT_ID,
-        relay_target=FORWARD_TARGET,
+        plugins=[MeshRelayPlugin(FORWARD_TARGET)],
         remote_base_url=MESH_WEBSOCKET_HOST,
     )
 
@@ -36,6 +37,7 @@ def main() -> None:
         print("Stopping remote manual mesh relay client")
         asyncio.run(relay.stop())
         relay.join(timeout=5.0)
+
 
 if __name__ == "__main__":
     main()
