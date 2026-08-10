@@ -599,7 +599,7 @@ wheels = [
 
 [[package]]
 name = "lange-python"
-version = "0.9.0"
+version = "0.9.1"
 source = { editable = "." }
 dependencies = [
     { name = "certifi", marker = "sys_platform == 'darwin'" },
