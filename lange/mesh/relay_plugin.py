@@ -86,11 +86,11 @@ class MeshRelayPlugin(MeshPlugin):
                 parsed_url.fragment,
             )
         )
-        headers = {
-            name: value
-            for name, value in request.headers.items()
+        headers = [
+            (name, value)
+            for name, value in request.header_pairs
             if name.lower() not in HOP_BY_HOP_HEADERS
-        }
+        ]
         if request.body is None:
             body = None
         elif request.body_encoding == "base64":
@@ -119,7 +119,11 @@ class MeshRelayPlugin(MeshPlugin):
             type="relay",
             data=MeshRelayResponse(
                 status=response.status_code,
-                headers=dict(response.headers),
+                header_pairs=[
+                    (name, value)
+                    for name, value in response.headers.multi_items()
+                    if name.lower() not in HOP_BY_HOP_HEADERS
+                ],
                 body=base64.b64encode(response.content).decode("ascii"),
                 body_encoding="base64",
             ),

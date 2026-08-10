@@ -259,7 +259,10 @@ def test_relay_plugin_forwards_http_request(
             captured.update(kwargs)
             return httpx.Response(
                 201,
-                headers={"x-result": "ok"},
+                headers=[
+                    ("set-cookie", "session=one; Path=/"),
+                    ("set-cookie", "theme=dark; Path=/"),
+                ],
                 content=b"\x00result",
             )
 
@@ -271,7 +274,12 @@ def test_relay_plugin_forwards_http_request(
         data=MeshRelayRequest(
             method="post",
             path="/items",
-            headers={"content-type": "application/octet-stream", "Host": "remote"},
+            header_pairs=[
+                ("content-type", "application/octet-stream"),
+                ("x-tag", "one"),
+                ("x-tag", "two"),
+                ("Host", "remote"),
+            ],
             body="AHBheWxvYWQ=",
             body_encoding="base64",
             query_params={"tag": ["one", "two"]},
@@ -283,11 +291,19 @@ def test_relay_plugin_forwards_http_request(
 
     assert captured["method"] == "POST"
     assert captured["url"] == "http://localhost:5173/api/items?tag=one&tag=two"
-    assert captured["headers"] == {"content-type": "application/octet-stream"}
+    assert captured["headers"] == [
+        ("content-type", "application/octet-stream"),
+        ("x-tag", "one"),
+        ("x-tag", "two"),
+    ]
     assert captured["content"] == b"\x00payload"
     assert response.id == request.id
     assert isinstance(response.data, MeshRelayResponse)
     assert response.data.status == 201
+    assert response.data.header_pairs == [
+        ("set-cookie", "session=one; Path=/"),
+        ("set-cookie", "theme=dark; Path=/"),
+    ]
     assert response.data.body == "AHJlc3VsdA=="
     assert response.data.body_encoding == "base64"
 

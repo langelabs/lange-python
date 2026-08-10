@@ -29,6 +29,7 @@ def test_mesh_rest_request_serializes_http_payload() -> None:
     assert request.path == "/api/widgets"
     assert request.query_params == {"page": ["1"], "tag": ["a", "b"]}
     assert request.headers == {"content-type": "application/json"}
+    assert request.header_pairs == [("content-type", "application/json")]
     assert request.body == "eyJvayI6dHJ1ZX0="
     assert request.body_encoding == "base64"
     assert request.model_dump()["body_encoding"] == "base64"
@@ -36,6 +37,18 @@ def test_mesh_rest_request_serializes_http_payload() -> None:
         "page": ["1"],
         "tag": ["a", "b"],
     }
+
+
+def test_mesh_rest_request_preserves_ordered_repeated_header_pairs() -> None:
+    """Preserve repeated request headers while populating legacy headers."""
+    request = MeshRelayRequest(
+        method="GET",
+        path="/",
+        header_pairs=[("x-tag", "one"), ("x-tag", "two")],
+    )
+
+    assert request.header_pairs == [("x-tag", "one"), ("x-tag", "two")]
+    assert request.headers == {"x-tag": "two"}
 
 
 def test_mesh_rest_response_serializes_http_payload() -> None:
@@ -50,10 +63,28 @@ def test_mesh_rest_response_serializes_http_payload() -> None:
 
     assert response.status == 502
     assert response.headers == {"content-type": "text/plain"}
+    assert response.header_pairs == [("content-type", "text/plain")]
     assert response.body == "upstream failed"
     assert response.body_encoding is None
     assert response.error == "bad gateway"
     assert "body_encoding" in response.model_dump()
+
+
+def test_mesh_rest_response_preserves_ordered_repeated_header_pairs() -> None:
+    """Preserve repeated response headers in their original wire order."""
+    response = MeshRelayResponse(
+        status=200,
+        header_pairs=[
+            ("set-cookie", "session=one; Path=/"),
+            ("set-cookie", "theme=dark; Path=/"),
+        ],
+    )
+
+    assert response.header_pairs == [
+        ("set-cookie", "session=one; Path=/"),
+        ("set-cookie", "theme=dark; Path=/"),
+    ]
+    assert response.headers == {"set-cookie": "theme=dark; Path=/"}
 
 
 def test_mesh_message_accepts_rest_request_payload() -> None:
