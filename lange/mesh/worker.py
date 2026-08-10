@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import platform
+import uuid
 
 from lange.contracts import MeshRelayRequest
 from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
@@ -20,7 +21,7 @@ from .utils.headers import filter_hop_by_hop_headers
 class MeshWorker:
     def __init__(
         self,
-        name: str,
+        project_id: uuid.UUID | str,
         relay_target: str | None = None,
         timeout: float = 60,
         remote_base_url: str = "wss://mesh.lange-labs.com",
@@ -29,7 +30,7 @@ class MeshWorker:
     ) -> None:
         """Create a restartable mesh worker.
 
-        :param name: Worker name registered with the mesh API.
+        :param project_id: Project whose relay-worker pool receives this worker.
         :param relay_target: Optional local HTTP target for relay requests.
         :param timeout: Connection and relay request timeout in seconds.
         :param remote_base_url: Base websocket URL for the Lange mesh service.
@@ -42,7 +43,7 @@ class MeshWorker:
         self._api_key = api_key
 
         # worker config
-        self.name = name
+        self.project_id = uuid.UUID(str(project_id))
         self.platform = platform.system()
 
         # relay config
@@ -63,6 +64,7 @@ class MeshWorker:
         return MeshClient(
             handler=self.handle,
             remote_base_url=self._remote_base_url,
+            project_id=self.project_id,
             api_key=self._api_key,
             timeout=self.timeout,
         )
@@ -130,8 +132,8 @@ class MeshWorker:
             MeshMessage(
                 status="hello",
                 data=MeshWorkerRegistration(
-                    name=self.name,
                     timeout=self.timeout,
+                    platform=self.platform,
                 ),
                 type="manage",
             )

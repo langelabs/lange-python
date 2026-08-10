@@ -1,9 +1,9 @@
 [project]
 name = "lange-python"
-version = "0.7.3"
+version = "0.8.0"
 description = "A bundeld set of tools, clients for the lange-suite of tools and more."
 authors = [
-    {name = "contact@robertlange.me"}
+    { name = "contact@robertlange.me" }
 ]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,14 +34,15 @@ lange = "lange.cli:cli"
 pytest = "^8.4.2"
 
 [project.optional-dependencies]
-dev = [
-    "openai>=2.40.0"
-]
 
 ai-mlx = [
     "mlx-lm",
     "mlx_vlm",
-    "uvicorn>=0.47.0"
+    "mflux==0.18.0",
+    "mlx-embeddings==0.1.0",
+    "openai>=2.40.0",
+    "uvicorn>=0.47.0",
+    "fastapi>=0.139.0"
 ]
 
 ai-cuda = [
@@ -53,6 +54,10 @@ ai-cuda = [
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.uv]
+environments = ["sys_platform == 'darwin'"]
+
 [tool.uv.sources]
-mlx-lm = { git = "https://github.com/ml-explore/mlx-lm" }
-mlx-vlm = { git = "https://github.com/Blaizzy/mlx-vlm" }
+mlx-lm = { git = "https://github.com/ml-explore/mlx-lm", rev = "ab1806e8f5d6aa035973af194a1b9198ab4754dc" }
+mlx-vlm = { git = "https://github.com/Blaizzy/mlx-vlm", rev = "2b7f1a00319fccd2b3b3a6d5fac787234a1cfdef" }
+mflux = { git = "https://github.com/filipstrand/mflux", rev = "97ac5e6280e8c65e48a609722229eb9d03ef2cbe" }

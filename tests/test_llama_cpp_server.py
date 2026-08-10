@@ -154,10 +154,10 @@ def test_llama_cpp_minimal_config_builds_model_settings(
     }
 
 
-def test_llama_cpp_maps_context_and_registration_metadata(
+def test_llama_cpp_maps_context_and_chat_template(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Assert portable context and registration fields map into settings."""
+    """Assert portable context and chat template fields map into settings."""
     captured = _capture_model_settings(
         monkeypatch,
         _model_config(context_window=8192, chat_template="chatml"),
@@ -166,7 +166,18 @@ def test_llama_cpp_maps_context_and_registration_metadata(
     model_settings = captured["model_settings"][0]
     assert model_settings.n_ctx == 8192
     assert model_settings.chat_format == "chatml"
-    assert model_settings.hf_model_repo_id == "org/model"
+    assert model_settings.hf_model_repo_id is None
+
+
+def test_llama_cpp_keeps_local_gguf_loading_when_registration_has_repo_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Assert local GGUF paths are not reinterpreted as HF repo filenames."""
+    captured = _capture_model_settings(monkeypatch, _model_config())
+
+    model_settings = captured["model_settings"][0]
+    assert model_settings.model == "/tmp/model.gguf"
+    assert model_settings.hf_model_repo_id is None
 
 
 def test_llama_cpp_maps_runtime_config(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -13,12 +13,13 @@ pip install lange-python
 
 ```python
 import asyncio
+import os
 import time
 
 from lange.mesh.worker import MeshWorker
 
 relay = MeshWorker(
-    name="default",
+    project_id=os.environ["MESH_PROJECT_ID"],
     relay_target="http://localhost:3000",
 )
 
@@ -33,7 +34,8 @@ finally:
 ```
 
 The worker connects to `wss://mesh.lange-labs.com` by default and receives a
-public relay address such as `https://default.mesh.lange-labs.com/`.
+public relay address for the project, such as
+`https://my-project.mesh.lange-labs.com/`.
 
 If a mesh deployment requires bearer authentication, pass the token as
 `api_key`. Keep API keys in the environment or a local secret store instead of
@@ -45,7 +47,7 @@ import os
 from lange.mesh.worker import MeshWorker
 
 relay = MeshWorker(
-    name="default",
+    project_id=os.environ["MESH_PROJECT_ID"],
     relay_target="http://localhost:3000",
     api_key=os.environ["LANGE_LABS_API_KEY"],
 )

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MLX_MODEL = AiModelConfig(
+MLX_CHAT_MODEL = AiModelConfig(
     model_name="gemma-4-12b-it",
     model_alias="LL_C_0",
     model_type="LLM",
@@ -67,12 +67,12 @@ MLX_MODEL = AiModelConfig(
     ),
 )
 
-LLAMA_CPP_MODEL = AiModelConfig(
+LLAMA_CPP_CHAT_MODEL = AiModelConfig(
         model_name="gemma-4-12b-it",
         model_alias="LL_C_0",
         model_type="LLM",
         size=12,
-        quantization="Q8_0-MTP",
+        quantization="Q8_0",
         enable_thinking=True,
         model_format="gguf",
         model_engine="llama.cpp",
@@ -88,13 +88,13 @@ LLAMA_CPP_MODEL = AiModelConfig(
                 AIModelSpecs(
                     model_format="gguf",
                     model_size_in_billions=12,
-                    quantization="Q8_0-MTP",
+                    quantization="Q8_0",
                     model_id="unsloth/gemma-4-12b-it-GGUF",
                     model_hub="huggingface",
                     model_uri=None,
                     model_revision=None,
                     activated_size_in_billions=None,
-                    model_filename="MTP/gemma-4-12b-it-Q8_0-MTP.gguf",
+                    model_filename="gemma-4-12b-it-Q8_0.gguf",
                 )
             ],
             chat_template=None,
@@ -122,14 +122,14 @@ LLAMA_CPP_MODEL = AiModelConfig(
 
 
 async def run_mlx():
-    from lange.mesh.ai.servers.mlx_vlm import MlxVlmServer
-    inference = MlxVlmServer(MLX_MODEL)
+    from servers.mlx.mlx_llm import MlxLLMServer
+    inference = MlxLLMServer(MLX_CHAT_MODEL)
     inference.start()
     inference.join()
 
 async def run_llamacpp():
     from lange.mesh.ai.servers.llama_cpp import LlamaCppServer
-    inference = LlamaCppServer(LLAMA_CPP_MODEL)
+    inference = LlamaCppServer(LLAMA_CPP_CHAT_MODEL)
     inference.start()
     inference.join()
 

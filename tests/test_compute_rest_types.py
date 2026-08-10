@@ -1,5 +1,8 @@
 """Tests for compute REST mesh payload types."""
 
+import pytest
+from pydantic import ValidationError
+
 from lange.contracts.mesh import MeshMessage
 from lange.contracts.relay import MeshRelayRequest, MeshRelayResponse
 from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
@@ -112,22 +115,23 @@ def test_mesh_message_accepts_relay_worker_config_payload() -> None:
 
 
 def test_mesh_message_accepts_relay_worker_registration_payload() -> None:
-    """Assert worker registration payloads use ``name`` and timeout."""
+    """Assert worker registration payloads contain only the request timeout."""
     message = MeshMessage.model_validate(
         {
             "status": "hello",
             "type": "manage",
             "data": {
-                "name": "default",
                 "timeout": 30.0,
             },
         }
     )
 
     assert isinstance(message.data, MeshWorkerRegistration)
-    assert message.data.name == "default"
     assert message.data.timeout == 30.0
-    assert message.data.model_dump() == {
-        "name": "default",
-        "timeout": 30.0,
-    }
+    assert message.data.model_dump() == {"timeout": 30.0, "platform": None}
+
+
+def test_worker_registration_rejects_removed_name() -> None:
+    """Reject the removed named-pool registration field."""
+    with pytest.raises(ValidationError):
+        MeshWorkerRegistration(name="legacy", timeout=30.0)

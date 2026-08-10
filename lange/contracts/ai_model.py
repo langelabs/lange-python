@@ -11,7 +11,7 @@ class AIModelSpecs(BaseModel):
     """
 
     model_format: Literal["mlx", "vLLM", "gguf"]
-    model_size_in_billions: int
+    model_size_in_billions: int | float
     quantization: str
     model_id: str
     model_hub: Literal["huggingface"]
@@ -48,7 +48,7 @@ class AiModelRegistration(BaseModel):
     context_length: int
     model_name: str
     model_lang: list[str]
-    model_ability: list[Literal["generate", "chat"]]
+    model_ability: list[Literal["generate", "chat", "embed"]]
     model_description: str
     model_family: str
     model_specs: list[AIModelSpecs]
@@ -117,7 +117,7 @@ class AiModelConfig(BaseModel):
     model_type: Literal["LLM", "embedding", "image", "audio", "video"]
 
     # The size of the model in case multiple are available. e.G. gemma4 with 12b vs 31b
-    size: str | int | None = None
+    size: str | int | float | None = None
 
     # The quantization of the model to use. Keep None for default.
     quantization: str | None = None

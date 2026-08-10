@@ -28,7 +28,7 @@ _bootstrap_import_path()
 
 
 MESH_WEBSOCKET_HOST = "ws://localhost:8000"
-RELAY_NAME = "dev_manual_test"
+PROJECT_ID = "00000000-0000-0000-0000-000000000001"
 FORWARD_TARGET = "http://localhost:5173"
 
 
@@ -40,14 +40,14 @@ def main() -> None:
     from lange.mesh.worker import MeshWorker
 
     relay = MeshWorker(
-        name=RELAY_NAME,
+        project_id=PROJECT_ID,
         relay_target=FORWARD_TARGET,
         remote_base_url=MESH_WEBSOCKET_HOST,
     )
 
     print("Starting manual mesh relay client")
     print(f"Mesh websocket host: {MESH_WEBSOCKET_HOST}")
-    print(f"Relay worker name: {RELAY_NAME}")
+    print(f"Project ID: {PROJECT_ID}")
     print(f"Forward target: {FORWARD_TARGET}")
 
     relay.start()

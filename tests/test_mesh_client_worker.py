@@ -7,6 +7,7 @@ import base64
 import json
 import threading
 from typing import Any
+import uuid
 
 import httpx
 import pytest
@@ -16,6 +17,8 @@ from lange.contracts.relay import MeshRelayRequest, MeshRelayResponse
 from lange.contracts.worker import MeshWorkerConfig, MeshWorkerRegistration
 from lange.mesh.client import MeshClient
 from lange.mesh.worker import MeshWorker
+
+PROJECT_ID = uuid.UUID("4c705310-f74d-4a13-8f39-8ebf052e70aa")
 
 
 def test_mesh_client_send_serializes_messages_on_client_loop() -> None:
@@ -44,6 +47,7 @@ def test_mesh_client_send_serializes_messages_on_client_loop() -> None:
         client = MeshClient(
             handler=lambda _message: asyncio.sleep(0),
             remote_base_url="ws://example.test",
+            project_id=PROJECT_ID,
         )
         client.loop = asyncio.get_running_loop()
         client.websocket = websocket  # type: ignore[assignment]
@@ -85,6 +89,7 @@ def test_mesh_client_send_serializes_worker_registration() -> None:
         client = MeshClient(
             handler=lambda _message: asyncio.sleep(0),
             remote_base_url="ws://example.test",
+            project_id=PROJECT_ID,
         )
         client.loop = asyncio.get_running_loop()
         client.websocket = websocket  # type: ignore[assignment]
@@ -94,7 +99,6 @@ def test_mesh_client_send_serializes_worker_registration() -> None:
                 status="hello",
                 type="manage",
                 data=MeshWorkerRegistration(
-                    name="local-relay",
                     timeout=12.5,
                 ),
             )
@@ -105,10 +109,7 @@ def test_mesh_client_send_serializes_worker_registration() -> None:
 
     raw_message = json.loads(fake_websocket.sent[0])
     assert raw_message["type"] == "manage"
-    assert raw_message["data"] == {
-        "name": "local-relay",
-        "timeout": 12.5,
-    }
+    assert raw_message["data"] == {"timeout": 12.5, "platform": None}
 
 
 def test_mesh_client_accept_requests_decodes_messages_for_handler() -> None:
@@ -152,7 +153,11 @@ def test_mesh_client_accept_requests_decodes_messages_for_handler() -> None:
 
     async def run() -> None:
         """Consume the fake websocket."""
-        client = MeshClient(handler=handle, remote_base_url="ws://example.test")
+        client = MeshClient(
+            handler=handle,
+            remote_base_url="ws://example.test",
+            project_id=PROJECT_ID,
+        )
         await client.accept_requests(FakeWebSocket())  # type: ignore[arg-type]
 
     asyncio.run(run())
@@ -195,6 +200,7 @@ def test_mesh_client_stop_closes_websocket_on_client_loop() -> None:
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="ws://example.test",
+        project_id=PROJECT_ID,
     )
     client.loop = loop
     client.websocket = websocket  # type: ignore[assignment]
@@ -217,6 +223,7 @@ def test_mesh_client_stop_is_idempotent_when_not_connected() -> None:
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="ws://example.test",
+        project_id=PROJECT_ID,
     )
 
     asyncio.run(client.stop())
@@ -239,6 +246,7 @@ def test_mesh_client_stop_before_run_skips_websocket_connection(
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="ws://example.test",
+        project_id=PROJECT_ID,
     )
 
     async def run() -> None:
@@ -292,12 +300,15 @@ def test_mesh_client_connects_to_standalone_mesh_entrypoint(
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="wss://mesh.lange-labs.com",
+        project_id=PROJECT_ID,
         api_key="secret-token",
     )
 
     asyncio.run(client._run_async())
 
-    assert captured["uri"] == "wss://mesh.lange-labs.com/v1/workers/entrypoint"
+    assert captured["uri"] == (
+        f"wss://mesh.lange-labs.com/api/projects/{PROJECT_ID}/relay-workers"
+    )
     assert captured["additional_headers"] == {
         "Authorization": "Bearer secret-token"
     }
@@ -305,7 +316,7 @@ def test_mesh_client_connects_to_standalone_mesh_entrypoint(
 
 def test_mesh_worker_defaults_to_standalone_mesh_service() -> None:
     """Default worker connections target the deployed standalone mesh service."""
-    worker = MeshWorker(name="local-relay")
+    worker = MeshWorker(project_id=PROJECT_ID)
 
     assert worker._remote_base_url == "wss://mesh.lange-labs.com"
 
@@ -313,7 +324,7 @@ def test_mesh_worker_defaults_to_standalone_mesh_service() -> None:
 def test_mesh_worker_hello_stores_runtime_config_and_returns_ready() -> None:
     """Handle mesh hello config without starting AI clients for relay-only workers."""
     worker = MeshWorker(
-        name="local-relay",
+        project_id=PROJECT_ID,
         relay_target="http://localhost:5173",
         remote_base_url="ws://example.test",
     )
@@ -338,10 +349,10 @@ def test_mesh_worker_hello_stores_runtime_config_and_returns_ready() -> None:
     assert response.data is None
 
 
-def test_mesh_worker_sends_name_registration_and_api_key(
+def test_mesh_worker_sends_project_registration_and_api_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Register relay workers with ``name`` and pass bearer auth to the client."""
+    """Register a project worker and pass bearer auth to its client."""
 
     class FakeClient:
         """Thread-compatible fake mesh client."""
@@ -372,7 +383,7 @@ def test_mesh_worker_sends_name_registration_and_api_key(
 
     monkeypatch.setattr("lange.mesh.worker.MeshClient", FakeClient)
     worker = MeshWorker(
-        name="local-relay",
+        project_id=PROJECT_ID,
         relay_target="http://localhost:5173",
         timeout=12.5,
         api_key="secret-token",
@@ -382,14 +393,14 @@ def test_mesh_worker_sends_name_registration_and_api_key(
 
     client = FakeClient.instances[0]
     assert client.kwargs["remote_base_url"] == "wss://mesh.lange-labs.com"
+    assert client.kwargs["project_id"] == PROJECT_ID
     assert client.kwargs["api_key"] == "secret-token"
     assert isinstance(client.sent[0].data, MeshWorkerRegistration)
-    assert client.sent[0].data.name == "local-relay"
     assert client.sent[0].type == "manage"
     assert client.sent[0].data.timeout == 12.5
     assert client.sent[0].data.model_dump() == {
-        "name": "local-relay",
         "timeout": 12.5,
+        "platform": worker.platform,
     }
 
 
@@ -421,7 +432,7 @@ def test_mesh_worker_stop_stops_client_and_joins_thread() -> None:
             """
             self.join_timeout = timeout
 
-    worker = MeshWorker(name="local-relay", remote_base_url="ws://example.test")
+    worker = MeshWorker(project_id=PROJECT_ID, remote_base_url="ws://example.test")
     client = FakeClient()
     thread = FakeThread()
     worker.client = client  # type: ignore[assignment]
@@ -470,7 +481,7 @@ def test_mesh_worker_start_can_restart_after_stop(
             self.stopped = True
 
     monkeypatch.setattr("lange.mesh.worker.MeshClient", FakeClient)
-    worker = MeshWorker(name="local-relay", remote_base_url="ws://example.test")
+    worker = MeshWorker(project_id=PROJECT_ID, remote_base_url="ws://example.test")
 
     worker.start()
     worker.join(timeout=1.0)
@@ -540,7 +551,7 @@ def test_mesh_worker_forwards_relay_requests_to_local_target(
 
     monkeypatch.setattr("lange.mesh.worker.httpx.AsyncClient", FakeAsyncClient)
     worker = MeshWorker(
-        name="local-relay",
+        project_id=PROJECT_ID,
         relay_target="http://localhost:5173/api",
         timeout=12.5,
         remote_base_url="ws://example.test",

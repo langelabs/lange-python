@@ -1,4 +1,3 @@
-import threading
 from pathlib import Path
 from typing import Any
 
@@ -6,34 +5,15 @@ import uvicorn
 from llama_cpp import llama_cpp
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import ModelSettings, ServerSettings
-
-from ..utils.download_model import download_model
-from lange.contracts import AiModelConfig
+from .__base import InferenceServer
 
 
-class LlamaCppServer(threading.Thread):
+class LlamaCppServer(InferenceServer):
     """Run a llama.cpp OpenAI-compatible server in a daemon thread."""
-
-    def __init__(
-        self,
-        model: AiModelConfig,
-        host: str = "127.0.0.1",
-        port: int = 8080,
-    ) -> None:
-        """Create a llama.cpp server thread.
-
-        :param model: AI model configuration to serve.
-        :param host: Host address for the server.
-        :param port: TCP port for the server.
-        """
-        super().__init__(daemon=True)
-        self.model = model
-        self.host = host
-        self.port = port
 
     def run(self) -> None:
         """Download the configured model and run the llama.cpp server."""
-        model_path = download_model(self.model)
+        model_path = self.download()
         runtime_config = self.model.runtime_config
 
         model_setting_values: dict[str, Any] = {
@@ -48,11 +28,6 @@ class LlamaCppServer(threading.Thread):
         if self.model.registration is not None:
             if self.model.registration.chat_template:
                 model_setting_values["chat_format"] = self.model.registration.chat_template
-
-            if self.model.registration.model_specs:
-                model_id = self.model.registration.model_specs[0].model_id
-                if model_id:
-                    model_setting_values["hf_model_repo_id"] = model_id
 
         if runtime_config is not None:
             runtime_mappings = {
@@ -105,6 +80,9 @@ class LlamaCppServer(threading.Thread):
             port=self.port,
             log_level="info",
         )
+
+    def stop(self) -> None:
+        raise NotImplementedError()
 
     @staticmethod
     def _resolve_model_path(model_path: str | Path) -> str:
