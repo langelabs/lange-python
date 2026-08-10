@@ -176,11 +176,13 @@ def _run_docker_flow(folder: Path, publish: bool) -> None:
             f"Dockerfile was not found at '{folder / 'Dockerfile'}'."
         )
 
-    ensure_docker_is_available()
-
     try:
-        for dockerfile in dockerfiles:
-            image_reference = parse_image_reference(dockerfile)
+        image_references = [
+            (dockerfile, parse_image_reference(dockerfile))
+            for dockerfile in dockerfiles
+        ]
+        ensure_docker_is_available()
+        for dockerfile, image_reference in image_references:
             run_docker_build(
                 folder=folder,
                 dockerfile=dockerfile,

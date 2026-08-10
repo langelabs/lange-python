@@ -319,7 +319,8 @@ def test_cli_build_invalid_docker_image_comment_errors() -> None:
         service_dir.mkdir(parents=True, exist_ok=True)
         (service_dir / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
 
-        result = runner.invoke(cli, ["build", "svc", "--docker"])
+        with patch("lange.cli.build._docker.shutil.which", return_value=None):
+            result = runner.invoke(cli, ["build", "svc", "--docker"])
 
     assert result.exit_code != 0
     assert "must start with '# image: <name>'" in result.output
