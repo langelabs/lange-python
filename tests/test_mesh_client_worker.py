@@ -20,12 +20,14 @@ from lange.mesh.contracts import (
 )
 from lange.mesh.worker import MeshWorker
 
-PROJECT_ID = uuid.UUID("4c705310-f74d-4a13-8f39-8ebf052e70aa")
-
-
 def test_mesh_client_does_not_accept_project_id() -> None:
     """Keep project ownership out of the transport client contract."""
     assert "project_id" not in inspect.signature(MeshClient).parameters
+
+
+def test_mesh_worker_does_not_accept_project_id() -> None:
+    """Keep project identifiers out of the mesh worker contract."""
+    assert "project_id" not in inspect.signature(MeshWorker).parameters
 
 
 def test_mesh_client_send_serializes_messages_on_client_loop() -> None:
@@ -385,7 +387,7 @@ def test_mesh_client_connects_to_standalone_mesh_entrypoint(
 
 def test_mesh_worker_defaults_to_standalone_mesh_service() -> None:
     """Default worker connections target the deployed standalone mesh service."""
-    worker = MeshWorker(project_id=PROJECT_ID)
+    worker = MeshWorker()
 
     assert worker._remote_base_url == "wss://mesh.lange-labs.com"
 
@@ -393,7 +395,6 @@ def test_mesh_worker_defaults_to_standalone_mesh_service() -> None:
 def test_mesh_worker_hello_stores_runtime_config_and_returns_ready() -> None:
     """Handle mesh hello config without starting AI clients for relay-only workers."""
     worker = MeshWorker(
-        project_id=PROJECT_ID,
         remote_base_url="ws://example.test",
     )
     config = MeshWorkerConfig(
@@ -419,10 +420,10 @@ def test_mesh_worker_hello_stores_runtime_config_and_returns_ready() -> None:
     assert response.data is None
 
 
-def test_mesh_worker_sends_project_registration_and_api_key(
+def test_mesh_worker_sends_registration_and_api_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Register a project worker and pass bearer auth to its client."""
+    """Register a worker and pass bearer auth to its client."""
 
     class FakeClient:
         """Thread-compatible fake mesh client."""
@@ -453,7 +454,6 @@ def test_mesh_worker_sends_project_registration_and_api_key(
 
     monkeypatch.setattr("lange.mesh.worker.MeshClient", FakeClient)
     worker = MeshWorker(
-        project_id=PROJECT_ID,
         timeout=12.5,
         api_key="secret-token",
     )
@@ -517,7 +517,7 @@ def test_mesh_worker_reconnects_and_registers_after_client_disconnect(
 
     monkeypatch.setattr("lange.mesh.worker.MeshClient", FakeClient)
     monkeypatch.setattr("lange.mesh.worker.asyncio.sleep", skip_delay)
-    worker = MeshWorker(project_id=PROJECT_ID, remote_base_url="ws://example.test")
+    worker = MeshWorker(remote_base_url="ws://example.test")
 
     asyncio.run(worker._run_async())
 
@@ -557,7 +557,7 @@ def test_mesh_worker_stop_stops_client_and_joins_thread() -> None:
             """
             self.join_timeout = timeout
 
-    worker = MeshWorker(project_id=PROJECT_ID, remote_base_url="ws://example.test")
+    worker = MeshWorker(remote_base_url="ws://example.test")
     client = FakeClient()
     thread = FakeThread()
     worker._client = client  # type: ignore[assignment]
@@ -608,7 +608,7 @@ def test_mesh_worker_start_can_restart_after_stop(
             self.disconnected.set()
 
     monkeypatch.setattr("lange.mesh.worker.MeshClient", FakeClient)
-    worker = MeshWorker(project_id=PROJECT_ID, remote_base_url="ws://example.test")
+    worker = MeshWorker(remote_base_url="ws://example.test")
 
     worker.start()
     first_thread = worker._thread

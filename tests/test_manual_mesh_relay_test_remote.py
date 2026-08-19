@@ -8,5 +8,4 @@ def test_remote_manual_relay_defaults_match_production_contract() -> None:
     script = importlib.import_module("manual_mesh_relay_test_remote")
 
     assert script.MESH_WEBSOCKET_HOST == "wss://mesh.lange-labs.com"
-    assert script.PROJECT_ID == "00000000-0000-0000-0000-000000000001"
     assert script.FORWARD_TARGET == "http://localhost:5173"

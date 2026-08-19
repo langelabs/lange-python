@@ -4,7 +4,6 @@ from lange.mesh import MeshRelayPlugin, MeshWorker
 
 
 MESH_WEBSOCKET_HOST = "wss://mesh.lange-labs.com"
-PROJECT_ID = "00000000-0000-0000-0000-000000000001"
 FORWARD_TARGET = "http://localhost:5173"
 
 
@@ -15,14 +14,12 @@ def main() -> None:
     """
 
     relay = MeshWorker(
-        project_id=PROJECT_ID,
         plugins=[MeshRelayPlugin(FORWARD_TARGET)],
         remote_base_url=MESH_WEBSOCKET_HOST,
     )
 
     print("Starting remote manual mesh relay client")
     print(f"Mesh websocket host: {MESH_WEBSOCKET_HOST}")
-    print(f"Project ID: {PROJECT_ID}")
     print(f"Forward target: {FORWARD_TARGET}")
 
     relay.start()

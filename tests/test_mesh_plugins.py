@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any
 
 import httpx
@@ -99,7 +98,7 @@ def test_worker_starts_plugins_before_connection_thread(
     """Start plugins in constructor order before opening the connection."""
     events: list[str] = []
     plugins = [RecordingPlugin("first", events), RecordingPlugin("second", events)]
-    worker = MeshWorker(project_id=uuid.uuid4(), plugins=plugins)
+    worker = MeshWorker(plugins=plugins)
     fake_thread = FakeThread()
 
     monkeypatch.setattr("lange.mesh.worker.threading.Thread", lambda **_: fake_thread)
@@ -113,7 +112,6 @@ def test_worker_rolls_back_started_plugins_when_startup_fails() -> None:
     """Stop already-started plugins when a later plugin cannot start."""
     events: list[str] = []
     worker = MeshWorker(
-        project_id=uuid.uuid4(),
         plugins=[
             RecordingPlugin("first", events),
             RecordingPlugin("broken", events, fail_start=True),
@@ -133,7 +131,6 @@ def test_worker_rolls_back_plugins_when_client_creation_fails(
     """Stop started plugins if connection setup cannot be created."""
     events: list[str] = []
     worker = MeshWorker(
-        project_id=uuid.uuid4(),
         plugins=[RecordingPlugin("first", events)],
     )
 
@@ -157,7 +154,7 @@ def test_worker_stops_plugins_in_reverse_order() -> None:
     events: list[str] = []
     first = RecordingPlugin("first", events)
     second = RecordingPlugin("second", events)
-    worker = MeshWorker(project_id=uuid.uuid4(), plugins=[first, second])
+    worker = MeshWorker(plugins=[first, second])
     worker._started_plugins = [first, second]
 
     asyncio.run(worker.stop())
@@ -169,7 +166,6 @@ def test_worker_rejects_multiple_relay_plugins() -> None:
     """Reject ambiguous relay targets on one worker connection."""
     with pytest.raises(ValueError, match="one MeshRelayPlugin"):
         MeshWorker(
-            project_id=uuid.uuid4(),
             plugins=[
                 MeshRelayPlugin("http://localhost:3000"),
                 MeshRelayPlugin("http://localhost:4000"),
@@ -179,7 +175,7 @@ def test_worker_rejects_multiple_relay_plugins() -> None:
 
 def test_pluginless_worker_returns_correlated_relay_error() -> None:
     """Return a bounded relay error when no plugin handles a request."""
-    worker = MeshWorker(project_id=uuid.uuid4())
+    worker = MeshWorker()
     request = MeshMessage(
         status="request",
         type="relay",
@@ -200,7 +196,6 @@ def test_worker_rejects_ambiguous_plugin_handlers() -> None:
     """Reject a message claimed by more than one plugin."""
     events: list[str] = []
     worker = MeshWorker(
-        project_id=uuid.uuid4(),
         plugins=[
             RecordingPlugin("first", events, handles_messages=True),
             RecordingPlugin("second", events, handles_messages=True),

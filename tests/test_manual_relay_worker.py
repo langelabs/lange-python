@@ -63,7 +63,6 @@ def test_manual_relay_worker_loads_adjacent_secret_file(
         """
         loaded_paths.append(path)
         monkeypatch.setenv("LANGE_LABS_API_KEY", "test-secret")
-        monkeypatch.setenv("MESH_PROJECT_ID", "00000000-0000-0000-0000-000000000001")
         monkeypatch.setenv("MESH_RELAY_TARGET", "http://localhost:3000")
         return True
 
@@ -75,7 +74,7 @@ def test_manual_relay_worker_loads_adjacent_secret_file(
     assert loaded_paths == [Path(module.__file__).with_name(".env")]
     assert len(worker_arguments) == 1
     arguments = worker_arguments[0]
-    assert arguments["project_id"] == "00000000-0000-0000-0000-000000000001"
+    assert "project_id" not in arguments
     assert arguments["remote_base_url"] == "wss://mesh.lange-labs.com"
     assert arguments["api_key"] == "test-secret"
     plugins = arguments["plugins"]

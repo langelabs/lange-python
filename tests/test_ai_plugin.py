@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any
 
 import pytest
@@ -115,7 +114,6 @@ def test_ai_plugins_assign_sequential_ports_and_manage_servers(
     )
     monkeypatch.setattr("lange.mesh.worker.threading.Thread", FakeWorkerThread)
     worker = MeshWorker(
-        project_id=uuid.uuid4(),
         plugins=[
             MeshAiPlugin(model_config("first")),
             MeshAiPlugin(model_config("second")),
@@ -165,7 +163,6 @@ def test_worker_rejects_duplicate_resolved_ai_ports(
         raising=False,
     )
     worker = MeshWorker(
-        project_id=uuid.uuid4(),
         plugins=[
             MeshAiPlugin(model_config("default")),
             MeshAiPlugin(model_config("explicit"), port=8500),

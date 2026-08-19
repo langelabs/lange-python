@@ -20,13 +20,11 @@ pip install lange-python
 
 ```python
 import asyncio
-import os
 import time
 
 from lange.mesh import MeshRelayPlugin, MeshWorker
 
 relay = MeshWorker(
-    project_id=os.environ["MESH_PROJECT_ID"],
     plugins=[MeshRelayPlugin("http://localhost:3000")],
 )
 
@@ -54,7 +52,6 @@ import os
 from lange.mesh import MeshRelayPlugin, MeshWorker
 
 relay = MeshWorker(
-    project_id=os.environ["MESH_PROJECT_ID"],
     plugins=[MeshRelayPlugin("http://localhost:3000")],
     api_key=os.environ["LANGE_LABS_API_KEY"],
 )
@@ -92,7 +89,6 @@ model = AiModelConfig(
     registration=None,
 )
 worker = MeshWorker(
-    project_id="00000000-0000-0000-0000-000000000001",
     plugins=[MeshAiPlugin(model)],
 )
 ```

@@ -6,7 +6,6 @@ import asyncio
 from logging import getLogger
 import platform
 import threading
-import uuid
 from collections import Counter
 from collections.abc import Sequence
 
@@ -30,7 +29,6 @@ class MeshWorker:
 
     def __init__(
         self,
-        project_id: uuid.UUID | str,
         plugins: Sequence[MeshPlugin] = (),
         timeout: float = 60.0,
         remote_base_url: str = "wss://mesh.lange-labs.com",
@@ -38,7 +36,6 @@ class MeshWorker:
     ) -> None:
         """Create a restartable mesh worker.
 
-        :param project_id: Project whose worker pool receives this worker.
         :param plugins: Ordered plugins installed into the worker.
         :param timeout: Connection and protocol timeout in seconds.
         :param remote_base_url: Base WebSocket URL for the mesh service.
@@ -51,7 +48,6 @@ class MeshWorker:
         if sum(isinstance(plugin, MeshRelayPlugin) for plugin in plugins) > 1:
             raise ValueError("A MeshWorker accepts at most one MeshRelayPlugin.")
 
-        self.project_id = uuid.UUID(str(project_id))
         self.plugins = tuple(plugins)
         self.timeout = timeout
         self.remote_relay_address: str | None = None
@@ -211,8 +207,7 @@ class MeshWorker:
                 if self._stop_requested.is_set():
                     break
                 logger.warning(
-                    "mesh_worker_connection_failed project_id=%s error=%s",
-                    self.project_id,
+                    "mesh_worker_connection_failed error=%s",
                     type(error).__name__,
                 )
             finally:

@@ -20,16 +20,13 @@ def main() -> None:
 
     :returns: ``None``.
     :raises FileNotFoundError: If the adjacent ``.env`` file is missing.
-    :raises RuntimeError: If a required environment variable is empty.
+    :raises RuntimeError: If the API key is empty.
     """
     env_path = Path(__file__).with_name(".env")
     if not load_dotenv(env_path):
         raise FileNotFoundError(f"Manual relay configuration not found: {env_path}")
 
-    project_id = os.getenv("MESH_PROJECT_ID")
     api_key = os.getenv("LANGE_LABS_API_KEY")
-    if not project_id:
-        raise RuntimeError("MESH_PROJECT_ID must be set in tests/manual/.env")
     if not api_key:
         raise RuntimeError("LANGE_LABS_API_KEY must be set in tests/manual/.env")
 
@@ -39,7 +36,6 @@ def main() -> None:
         DEFAULT_MESH_WEBSOCKET_HOST,
     )
     worker = MeshWorker(
-        project_id=project_id,
         plugins=[MeshRelayPlugin(relay_target)],
         remote_base_url=websocket_host,
         api_key=api_key,
@@ -47,7 +43,6 @@ def main() -> None:
 
     print("Starting authenticated manual mesh relay worker")
     print(f"Mesh websocket host: {websocket_host}")
-    print(f"Project ID: {project_id}")
     print(f"Forward target: {relay_target}")
 
     worker.start()
