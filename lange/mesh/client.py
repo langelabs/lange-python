@@ -122,10 +122,7 @@ class MeshClient(threading.Thread):
 
         try:
             async with websockets.connect(
-                uri=(
-                    f"{self.remote_base_url}/api/projects/"
-                    f"{self.project_id}/relay-workers"
-                ),
+                uri=f"{self.remote_base_url.rstrip('/')}/worker/proxy",
                 additional_headers=headers,
                 ssl=ssl_context,
                 proxy=None,

@@ -3,7 +3,7 @@ import time
 from lange.mesh import MeshRelayPlugin, MeshWorker
 
 
-MESH_WEBSOCKET_HOST = "wss://mesh.lange-labs.com"
+MESH_WEBSOCKET_HOST = "wss://worker.mesh.lange-labs.com"
 PROJECT_ID = "00000000-0000-0000-0000-000000000001"
 FORWARD_TARGET = "http://localhost:5173"
 

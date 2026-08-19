@@ -40,7 +40,7 @@ finally:
     asyncio.run(relay.stop())
 ```
 
-The worker connects to `wss://mesh.lange-labs.com` by default and receives a
+The worker connects to `wss://worker.mesh.lange-labs.com/worker/proxy` by default and receives a
 public relay address for the project, such as
 `https://my-project.mesh.lange-labs.com/`.
 

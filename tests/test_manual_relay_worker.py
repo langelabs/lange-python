@@ -76,7 +76,7 @@ def test_manual_relay_worker_loads_adjacent_secret_file(
     assert len(worker_arguments) == 1
     arguments = worker_arguments[0]
     assert arguments["project_id"] == "00000000-0000-0000-0000-000000000001"
-    assert arguments["remote_base_url"] == "wss://mesh.lange-labs.com"
+    assert arguments["remote_base_url"] == "wss://worker.mesh.lange-labs.com"
     assert arguments["api_key"] == "test-secret"
     plugins = arguments["plugins"]
     assert isinstance(plugins, list)

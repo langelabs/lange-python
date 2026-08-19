@@ -372,7 +372,7 @@ def test_mesh_client_connects_to_standalone_mesh_entrypoint(
     monkeypatch.setattr("lange.mesh.client.websockets.connect", fake_connect)
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
-        remote_base_url="wss://mesh.lange-labs.com",
+        remote_base_url="wss://worker.mesh.lange-labs.com",
         project_id=PROJECT_ID,
         api_key="secret-token",
     )
@@ -380,7 +380,7 @@ def test_mesh_client_connects_to_standalone_mesh_entrypoint(
     asyncio.run(client._run_async())
 
     assert captured["uri"] == (
-        f"wss://mesh.lange-labs.com/api/projects/{PROJECT_ID}/relay-workers"
+        "wss://worker.mesh.lange-labs.com/worker/proxy"
     )
     assert captured["additional_headers"] == {"Authorization": "Bearer secret-token"}
 
@@ -389,7 +389,7 @@ def test_mesh_worker_defaults_to_standalone_mesh_service() -> None:
     """Default worker connections target the deployed standalone mesh service."""
     worker = MeshWorker(project_id=PROJECT_ID)
 
-    assert worker._remote_base_url == "wss://mesh.lange-labs.com"
+    assert worker._remote_base_url == "wss://worker.mesh.lange-labs.com"
 
 
 def test_mesh_worker_hello_stores_runtime_config_and_returns_ready() -> None:
@@ -463,7 +463,7 @@ def test_mesh_worker_sends_project_registration_and_api_key(
     asyncio.run(worker._run_async())
 
     client = FakeClient.instances[0]
-    assert client.kwargs["remote_base_url"] == "wss://mesh.lange-labs.com"
+    assert client.kwargs["remote_base_url"] == "wss://worker.mesh.lange-labs.com"
     assert client.kwargs["project_id"] == PROJECT_ID
     assert client.kwargs["api_key"] == "secret-token"
     assert isinstance(client.sent[0].data, MeshWorkerRegistration)

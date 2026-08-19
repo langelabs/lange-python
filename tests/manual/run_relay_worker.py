@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from lange.mesh import MeshRelayPlugin, MeshWorker
 
-DEFAULT_MESH_WEBSOCKET_HOST = "wss://mesh.lange-labs.com"
+DEFAULT_MESH_WEBSOCKET_HOST = "wss://worker.mesh.lange-labs.com"
 DEFAULT_RELAY_TARGET = "http://localhost:3000"
 
 
