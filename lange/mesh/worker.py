@@ -33,7 +33,7 @@ class MeshWorker:
         project_id: uuid.UUID | str,
         plugins: Sequence[MeshPlugin] = (),
         timeout: float = 60.0,
-        remote_base_url: str = "wss://worker.mesh.lange-labs.com",
+        remote_base_url: str = "wss://mesh.lange-labs.com",
         api_key: str | None = None,
     ) -> None:
         """Create a restartable mesh worker.
@@ -89,7 +89,6 @@ class MeshWorker:
         return MeshClient(
             handler=self.handle,
             remote_base_url=self._remote_base_url,
-            project_id=self.project_id,
             api_key=self._api_key,
             timeout=self.timeout,
         )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import threading
 from typing import Any
@@ -20,6 +21,11 @@ from lange.mesh.contracts import (
 from lange.mesh.worker import MeshWorker
 
 PROJECT_ID = uuid.UUID("4c705310-f74d-4a13-8f39-8ebf052e70aa")
+
+
+def test_mesh_client_does_not_accept_project_id() -> None:
+    """Keep project ownership out of the transport client contract."""
+    assert "project_id" not in inspect.signature(MeshClient).parameters
 
 
 def test_mesh_client_send_serializes_messages_on_client_loop() -> None:
@@ -48,7 +54,6 @@ def test_mesh_client_send_serializes_messages_on_client_loop() -> None:
         client = MeshClient(
             handler=lambda _message: asyncio.sleep(0),
             remote_base_url="ws://example.test",
-            project_id=PROJECT_ID,
         )
         client.loop = asyncio.get_running_loop()
         client.websocket = websocket  # type: ignore[assignment]
@@ -90,7 +95,6 @@ def test_mesh_client_send_serializes_worker_registration() -> None:
         client = MeshClient(
             handler=lambda _message: asyncio.sleep(0),
             remote_base_url="ws://example.test",
-            project_id=PROJECT_ID,
         )
         client.loop = asyncio.get_running_loop()
         client.websocket = websocket  # type: ignore[assignment]
@@ -157,7 +161,6 @@ def test_mesh_client_accept_requests_decodes_messages_for_handler() -> None:
         client = MeshClient(
             handler=handle,
             remote_base_url="ws://example.test",
-            project_id=PROJECT_ID,
         )
         await client.accept_requests(FakeWebSocket())  # type: ignore[arg-type]
 
@@ -223,7 +226,6 @@ def test_mesh_client_accept_requests_handles_relay_messages_concurrently() -> No
         client = MeshClient(
             handler=handle,
             remote_base_url="ws://example.test",
-            project_id=PROJECT_ID,
         )
         accept_task = asyncio.create_task(
             client.accept_requests(FakeWebSocket())  # type: ignore[arg-type]
@@ -273,7 +275,6 @@ def test_mesh_client_stop_closes_websocket_on_client_loop() -> None:
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="ws://example.test",
-        project_id=PROJECT_ID,
     )
     client.loop = loop
     client.websocket = websocket  # type: ignore[assignment]
@@ -296,7 +297,6 @@ def test_mesh_client_stop_is_idempotent_when_not_connected() -> None:
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="ws://example.test",
-        project_id=PROJECT_ID,
     )
 
     asyncio.run(client.stop())
@@ -319,7 +319,6 @@ def test_mesh_client_stop_before_run_skips_websocket_connection(
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
         remote_base_url="ws://example.test",
-        project_id=PROJECT_ID,
     )
 
     async def run() -> None:
@@ -372,15 +371,14 @@ def test_mesh_client_connects_to_standalone_mesh_entrypoint(
     monkeypatch.setattr("lange.mesh.client.websockets.connect", fake_connect)
     client = MeshClient(
         handler=lambda _message: asyncio.sleep(0),
-        remote_base_url="wss://worker.mesh.lange-labs.com",
-        project_id=PROJECT_ID,
+        remote_base_url="wss://mesh.lange-labs.com",
         api_key="secret-token",
     )
 
     asyncio.run(client._run_async())
 
     assert captured["uri"] == (
-        "wss://worker.mesh.lange-labs.com/worker/proxy"
+        "wss://mesh.lange-labs.com/worker/proxy"
     )
     assert captured["additional_headers"] == {"Authorization": "Bearer secret-token"}
 
@@ -389,7 +387,7 @@ def test_mesh_worker_defaults_to_standalone_mesh_service() -> None:
     """Default worker connections target the deployed standalone mesh service."""
     worker = MeshWorker(project_id=PROJECT_ID)
 
-    assert worker._remote_base_url == "wss://worker.mesh.lange-labs.com"
+    assert worker._remote_base_url == "wss://mesh.lange-labs.com"
 
 
 def test_mesh_worker_hello_stores_runtime_config_and_returns_ready() -> None:
@@ -463,8 +461,8 @@ def test_mesh_worker_sends_project_registration_and_api_key(
     asyncio.run(worker._run_async())
 
     client = FakeClient.instances[0]
-    assert client.kwargs["remote_base_url"] == "wss://worker.mesh.lange-labs.com"
-    assert client.kwargs["project_id"] == PROJECT_ID
+    assert client.kwargs["remote_base_url"] == "wss://mesh.lange-labs.com"
+    assert "project_id" not in client.kwargs
     assert client.kwargs["api_key"] == "secret-token"
     assert isinstance(client.sent[0].data, MeshWorkerRegistration)
     assert client.sent[0].type == "manage"

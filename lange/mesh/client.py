@@ -2,7 +2,6 @@ import asyncio
 import ssl
 import threading
 import time
-import uuid
 from collections.abc import Callable
 from typing import Any, Coroutine
 
@@ -21,7 +20,6 @@ class MeshClient(threading.Thread):
             Coroutine[Any, Any, MeshMessage | None],
         ],
         remote_base_url: str,
-        project_id: uuid.UUID | str,
         api_key: str | None = None,
         timeout: float = 60.0,
     ) -> None:
@@ -29,14 +27,12 @@ class MeshClient(threading.Thread):
 
         :param handler: Async callback for decoded mesh messages.
         :param remote_base_url: Base websocket URL for the Lange mesh service.
-        :param project_id: Project whose relay-worker pool receives this client.
         :param api_key: Optional bearer token used for authentication.
         :param timeout: Connection and readiness timeout in seconds.
         """
         super().__init__(daemon=True)
         self.handler = handler
         self.remote_base_url = remote_base_url
-        self.project_id = uuid.UUID(str(project_id))
 
         self.api_key = api_key
         self.timeout = timeout
